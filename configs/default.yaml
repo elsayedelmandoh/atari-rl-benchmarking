@@ -1,0 +1,13 @@
+# default pipeline configuration
+# override via environment variables or .env
+
+project:
+  name: atari-rl-benchmarking
+
+pipeline:
+  random_seed: 42
+  smoke_test: false
+
+logging:
+  level: INFO
+  file: logs/project.log

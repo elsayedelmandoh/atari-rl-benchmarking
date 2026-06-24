@@ -1,0 +1,10 @@
+Algorithm,Environment,EnvID,Seed,Timesteps,EvalEpisodes,Final_Reward_Mean,Final_Reward_Std,Final_Reward_Min,Final_Reward_Max,Training_Seconds,Reward_Per_Hour,InputShape,InputDType,InputRange,InputLayout,InputContiguous,Status,FailureReason,ConfigHash
+DQN,Pong,ALE/Pong-v5,0,64,1,-21.0,0.0,-21.0,-21.0,1.4354201999958605,-52667.50460960353,"(4, 84, 84)",uint8,"[52.0, 236.0]",CHW,True,completed,,f814c74a7e4ef2bc
+DQN,Breakout,ALE/Breakout-v5,0,64,1,0.0,0.0,0.0,0.0,0.1280971000669524,0.0,"(4, 84, 84)",uint8,"[0.0, 148.0]",CHW,True,completed,,f814c74a7e4ef2bc
+DQN,Space Invaders,ALE/SpaceInvaders-v5,0,64,1,0.0,0.0,0.0,0.0,0.13485570007469505,0.0,"(4, 84, 84)",uint8,"[0.0, 133.0]",CHW,True,completed,,f814c74a7e4ef2bc
+PPO,Pong,ALE/Pong-v5,0,64,1,-21.0,0.0,-21.0,-21.0,0.42686270002741367,-177106.12802464323,"(4, 84, 84)",uint8,"[52.0, 236.0]",CHW,True,completed,,f814c74a7e4ef2bc
+PPO,Breakout,ALE/Breakout-v5,0,64,1,0.0,0.0,0.0,0.0,0.4236928999889642,0.0,"(4, 84, 84)",uint8,"[0.0, 148.0]",CHW,True,completed,,f814c74a7e4ef2bc
+PPO,Space Invaders,ALE/SpaceInvaders-v5,0,64,1,0.0,0.0,0.0,0.0,0.42094149999320507,0.0,"(4, 84, 84)",uint8,"[0.0, 133.0]",CHW,True,completed,,f814c74a7e4ef2bc
+DiscreteSAC,Pong,ALE/Pong-v5,0,64,1,-21.0,0.0,-21.0,-21.0,1.2925878999521956,-58487.31835010675,"(4, 84, 84)",uint8,"[52.0, 236.0]",CHW,True,completed,,f814c74a7e4ef2bc
+DiscreteSAC,Breakout,ALE/Breakout-v5,0,64,1,0.0,0.0,0.0,0.0,1.2777678999118507,0.0,"(4, 84, 84)",uint8,"[0.0, 148.0]",CHW,True,completed,,f814c74a7e4ef2bc
+DiscreteSAC,Space Invaders,ALE/SpaceInvaders-v5,0,64,1,0.0,0.0,0.0,0.0,1.278584299958311,0.0,"(4, 84, 84)",uint8,"[0.0, 133.0]",CHW,True,completed,,f814c74a7e4ef2bc

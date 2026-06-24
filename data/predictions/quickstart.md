@@ -1,0 +1,1 @@
+# prediction output storage rules

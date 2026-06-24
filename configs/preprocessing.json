@@ -1,0 +1,14 @@
+{
+  "preprocessing": {
+    "noop_max": 30,
+    "frame_skip": 4,
+    "screen_size": 84,
+    "terminal_on_life_loss": false,
+    "grayscale_obs": true,
+    "grayscale_newaxis": false,
+    "scale_obs": false,
+    "frame_stack": 4,
+    "expected_raw_layout": "HWC",
+    "expected_model_layout": "NCHW"
+  }
+}

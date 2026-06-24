@@ -1,0 +1,68 @@
+{
+  "algorithms": {
+    "DQN": {
+      "library": "stable_baselines3",
+      "class_name": "DQN",
+      "policy": "CnnPolicy",
+      "enabled": true,
+      "requires_discrete_action_space": true,
+      "source": "RL Zoo Atari DQN baseline values, shortened run budget for pilot.",
+      "n_envs": 1,
+      "smoke_timesteps": 256,
+      "params": {
+        "learning_rate": 0.0001,
+        "buffer_size": 100000,
+        "learning_starts": 100000,
+        "batch_size": 32,
+        "train_freq": 4,
+        "gradient_steps": 1,
+        "target_update_interval": 1000,
+        "exploration_fraction": 0.1,
+        "exploration_final_eps": 0.01
+      }
+    },
+    "PPO": {
+      "library": "stable_baselines3",
+      "class_name": "PPO",
+      "policy": "CnnPolicy",
+      "enabled": true,
+      "requires_discrete_action_space": true,
+      "source": "RL Zoo Atari PPO profile: n_envs=8, n_steps=128, n_epochs=4, batch_size=256, linear LR/clip, ent_coef=0.01, vf_coef=0.5.",
+      "n_envs": 8,
+      "smoke_timesteps": 256,
+      "params": {
+        "learning_rate": "lin_0.00025",
+        "n_steps": 128,
+        "batch_size": 256,
+        "n_epochs": 4,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": "lin_0.1",
+        "vf_coef": 0.5,
+        "ent_coef": 0.01
+      }
+    },
+    "DiscreteSAC": {
+      "library": "custom",
+      "class_name": "DiscreteSAC",
+      "policy": "CnnPolicy",
+      "enabled": true,
+      "requires_discrete_action_space": true,
+      "status": "approved",
+      "decision_note": "Use custom discrete-action SAC implementation for Atari Discrete action spaces.",
+      "source": "Custom experimental DiscreteSAC baseline; tuned for practical 200k pilot speed, not a mature library implementation.",
+      "n_envs": 1,
+      "smoke_timesteps": 64,
+      "params": {
+        "learning_rate": 0.0003,
+        "buffer_size": 100000,
+        "learning_starts": 10000,
+        "batch_size": 32,
+        "tau": 0.005,
+        "gamma": 0.99,
+        "train_freq": 4,
+        "gradient_steps": 1
+      }
+    }
+  }
+}
