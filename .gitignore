@@ -8,6 +8,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.omo
 
 # --- virtual envs ---
 .venv/
@@ -32,6 +33,12 @@ artifacts/**/*
 *.pth
 *.zip
 *.onnx
+*.mp4
+
+scripts/
+
+# --- legacy duplicate results (superseded by evals/<profile>/) ---
+evals/checkpoints/
 
 # --- logs ---
 logs/
@@ -50,4 +57,5 @@ logs/
 Thumbs.db
 
 # --- agent / private docs ---
-docs/00-agents/
+docs/00-internal/
+CLAUDE.md

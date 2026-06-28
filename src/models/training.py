@@ -13,33 +13,10 @@ from src.utils.data_acquisition import make_atari_env, make_vec_atari_env
 from src.utils.helpers import set_global_seed
 
 
-def get_sb3_class(class_name: str):
-    import stable_baselines3 as sb3
-
-    return getattr(sb3, class_name)
-
-
-def linear_schedule(initial_value: float):
-    initial_value = float(initial_value)
-
-    def schedule(progress_remaining: float) -> float:
-        return progress_remaining * initial_value
-
-    return schedule
-
-
-def normalize_sb3_params(params: dict[str, Any]) -> dict[str, Any]:
-    normalized: dict[str, Any] = {}
-    for key, value in params.items():
-        if isinstance(value, str) and value.startswith("lin_"):
-            normalized[key] = linear_schedule(float(value.removeprefix("lin_")))
-        else:
-            normalized[key] = value
-    return normalized
-
-
 def make_model(algo: str, algo_cfg: dict[str, Any], env: Any, seed: int):
-    if algo_cfg.get("library") == "custom" and algo_cfg["class_name"] == "DiscreteSAC":
+    class_name = algo_cfg["class_name"]
+
+    if class_name == "DiscreteSAC":
         from src.models.discrete_sac import DiscreteSAC
 
         return DiscreteSAC(
@@ -52,16 +29,18 @@ def make_model(algo: str, algo_cfg: dict[str, Any], env: Any, seed: int):
             **algo_cfg.get("params", {}),
         )
 
-    model_cls = get_sb3_class(algo_cfg["class_name"])
-    return model_cls(
-        algo_cfg["policy"],
-        env,
-        seed=seed,
-        verbose=0,
-        device="auto",
-        tensorboard_log="./logs",
-        **normalize_sb3_params(algo_cfg.get("params", {})),
-    )
+    if class_name == "DQN":
+        from src.models.dqn import make_dqn
+
+        return make_dqn(env, seed, algo_cfg.get("params", {}))
+
+    if class_name == "PPO":
+        from src.models.ppo import make_ppo
+
+        return make_ppo(env, seed, algo_cfg.get("params", {}))
+
+    msg = f"unknown algorithm class: {class_name}"
+    raise ValueError(msg)
 
 
 def evaluate_model(model: Any, env_id: str, seed: int, episodes: int) -> dict[str, float]:
@@ -159,15 +138,13 @@ def train_and_evaluate(
         "Final_Reward_Min": eval_stats["min"],
         "Final_Reward_Max": eval_stats["max"],
         "Training_Seconds": elapsed,
-        "Reward_Per_Hour": eval_stats["mean"] / (elapsed / 3600.0) if elapsed > 0 else 0.0,
-        "InputShape": str(input_meta["shape"]),
-        "InputDType": input_meta["dtype"],
-        "InputRange": str(input_meta["range"]),
-        "InputLayout": input_meta["layout"],
-        "InputContiguous": input_meta["contiguous"],
+        "Reward_Per_Hour": (eval_stats["mean"] / elapsed * 3600) if elapsed > 0 else 0.0,
+        "InputShape": str(input_meta.get("shape", "")),
+        "InputDType": str(input_meta.get("dtype", "")),
+        "InputRange": str(input_meta.get("range", "")),
+        "InputLayout": str(input_meta.get("layout", "")),
+        "InputContiguous": str(input_meta.get("contiguous", "")),
         "NumEnvs": n_envs,
-        "CheckpointDir": str(checkpoint_path) if checkpoint_path else "",
+        "CheckpointDir": str(checkpoint_dir) if checkpoint_dir else "",
         "FinalModelPath": str(final_model_path) if final_model_path else "",
-        "Status": "completed",
-        "FailureReason": "",
     }

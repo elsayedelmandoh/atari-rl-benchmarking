@@ -41,6 +41,7 @@ rl = [
     "pandas>=2.2.0",
     "scipy>=1.15.0",
     "pillow>=11.0.0",
+    "moviepy>=2.1.0",
 ]
 
 [tool.hatch.build.targets.wheel]

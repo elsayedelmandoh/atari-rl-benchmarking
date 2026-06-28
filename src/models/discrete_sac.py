@@ -101,15 +101,16 @@ class DiscreteSAC:
         device: str = "auto",
         tensorboard_log: str | None = None,
         learning_rate: float = 3e-4,
-        buffer_size: int = 50000,
-        learning_starts: int = 100,
+        buffer_size: int = 500000,
+        learning_starts: int = 50000,
         batch_size: int = 32,
         gamma: float = 0.99,
         tau: float = 0.005,
         train_freq: int = 1,
         gradient_steps: int = 1,
-        target_entropy_scale: float = 0.98,
+        target_entropy_scale: float = 0.6,
         alpha_lr: float = 3e-4,
+        max_grad_norm: float = 1.0,
         **_: Any,
     ) -> None:
         import torch
@@ -134,6 +135,7 @@ class DiscreteSAC:
         self.batch_size = int(batch_size)
         self.train_freq = int(train_freq)
         self.gradient_steps = int(gradient_steps)
+        self.max_grad_norm = float(max_grad_norm)
         self.target_entropy = -target_entropy_scale * np.log(1.0 / self.action_dim)
 
         obs, _ = env.reset(seed=seed)
@@ -210,6 +212,8 @@ class DiscreteSAC:
         import torch
         import torch.nn.functional as F  # noqa: N812
 
+        from src.config.logger import logger
+
         batch = self.buffer.sample(self.batch_size, self.device)
 
         with torch.no_grad():
@@ -225,12 +229,18 @@ class DiscreteSAC:
         q1_loss = F.mse_loss(q1_pred, target_q)
         q2_loss = F.mse_loss(q2_pred, target_q)
 
+        if torch.isnan(q1_loss) or torch.isinf(q1_loss) or torch.isnan(q2_loss) or torch.isinf(q2_loss):
+            logger.warning("nan/inf detected in q loss at step %d -- skipping update", self.num_timesteps)
+            return
+
         self.q1_opt.zero_grad()
         q1_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.q1.parameters(), self.max_grad_norm)
         self.q1_opt.step()
 
         self.q2_opt.zero_grad()
         q2_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.q2.parameters(), self.max_grad_norm)
         self.q2_opt.step()
 
         logits = self.actor(batch.obs)
@@ -241,6 +251,7 @@ class DiscreteSAC:
 
         self.actor_opt.zero_grad()
         actor_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.max_grad_norm)
         self.actor_opt.step()
 
         entropy = -(probs.detach() * log_probs.detach()).sum(dim=1).mean()
@@ -251,6 +262,23 @@ class DiscreteSAC:
 
         self._soft_update(self.q1, self.q1_target)
         self._soft_update(self.q2, self.q2_target)
+
+        if self.verbose > 0 and self.num_timesteps % 1000 == 0:
+            with torch.no_grad():
+                mean_q = float(q.mean().cpu().item())
+                mean_target_q = float(target_q.mean().cpu().item())
+                alpha_val = float(self.alpha.cpu().item())
+                log_alpha_val = float(self.log_alpha.cpu().item())
+            logger.info(
+                "step=%d q=%.2f target_q=%.2f entropy=%.3f alpha=%.4f log_alpha=%.2f actor_loss=%.4f",
+                self.num_timesteps,
+                mean_q,
+                mean_target_q,
+                float(entropy.cpu().item()),
+                alpha_val,
+                log_alpha_val,
+                float(actor_loss.cpu().item()),
+            )
 
     def _soft_update(self, source: Any, target: Any) -> None:
         with __import__("torch").no_grad():

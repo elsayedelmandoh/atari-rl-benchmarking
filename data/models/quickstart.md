@@ -1,1 +1,0 @@
-# model artifact storage rules

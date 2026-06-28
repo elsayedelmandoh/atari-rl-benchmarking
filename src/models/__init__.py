@@ -1,7 +1,17 @@
-"""propose: models package -- model architecture, training harness, and custom implementations.
+"""propose: models package -- training harness and algorithm implementations.
 input: configs, environment, hyperparameters.
-output: initialized models, trained policies, evaluation results."""
+output: trained models, evaluation results."""
 
-from src.models.build import load_model, run_training_loop
+from src.models.discrete_sac import DiscreteSAC
+from src.models.dqn import make_dqn
+from src.models.ppo import make_ppo
+from src.models.training import evaluate_model, make_model, train_and_evaluate
 
-__all__ = ["load_model", "run_training_loop"]
+__all__ = [
+    "DiscreteSAC",
+    "evaluate_model",
+    "make_dqn",
+    "make_model",
+    "make_ppo",
+    "train_and_evaluate",
+]
