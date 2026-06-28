@@ -10,7 +10,7 @@ import csv
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -126,7 +126,7 @@ def build_manifest(
         "profile": profile,
         "profile_config": profile_cfg,
         "config_hash": config_hash(configs),
-        "started_at": datetime.now(timezone.utc).isoformat(),  # noqa: UP017
+        "started_at": datetime.now(datetime.UTC).isoformat(),
         "timesteps": profile_cfg["timesteps"],
         "evaluation_episodes": profile_cfg["evaluation_episodes"],
         "seeds": profile_cfg["seeds"],
@@ -241,7 +241,7 @@ def main(argv: list[str] | None = None) -> int:
     run_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_root = evals_dir / "checkpoints" / profile
     checkpoint_root.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")  # noqa: UP017
+    timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
     result_path = run_dir / f"{profile}_results_{timestamp}.csv"
     manifest_path = run_dir / f"{profile}_manifest_{timestamp}.json"
 
@@ -319,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
         write_csv(results, result_path)
 
     elapsed = time.perf_counter() - start_global
-    manifest["finished_at"] = datetime.now(timezone.utc).isoformat()  # noqa: UP017
+    manifest["finished_at"] = datetime.now(datetime.UTC).isoformat()
     manifest["rows"] = len(results)
     manifest["total_runs"] = total
     manifest["completed"] = completed

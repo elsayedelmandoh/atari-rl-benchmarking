@@ -35,6 +35,7 @@ artifacts/**/*
 *.onnx
 *.mp4
 
+# --- scripts ---
 scripts/
 
 # --- legacy duplicate results (superseded by evals/<profile>/) ---
