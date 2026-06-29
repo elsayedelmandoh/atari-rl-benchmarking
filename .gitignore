@@ -1,1 +1,62 @@
-docs/00-internal
+# --- code artifacts ---
+__pycache__/
+*.pyc
+*.pyo
+.ruff_cache/
+.pytest_cache/
+.sisyphus/
+*.egg-info/
+dist/
+build/
+.omo
+
+# --- virtual envs ---
+.venv/
+venv/
+env/
+
+# --- secrets ---
+.env
+
+# --- data content (track dir structure only) ---
+data/raw/*
+data/train/*
+data/val/*
+data/test/*
+*.npy
+*.npz
+
+# --- model / pipeline artifacts ---
+artifacts/**/*
+!artifacts/**/.gitkeep
+*.pt
+*.pth
+*.zip
+*.onnx
+*.mp4
+
+# --- scripts ---
+scripts/
+
+# --- legacy duplicate results (superseded by evals/<profile>/) ---
+evals/checkpoints/
+
+# --- logs ---
+logs/
+
+# --- notebooks ---
+.ipynb_checkpoints/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- agent / private docs ---
+docs/00-internal/
+CLAUDE.md

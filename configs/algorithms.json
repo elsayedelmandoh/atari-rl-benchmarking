@@ -1,0 +1,96 @@
+{
+  "algorithms": {
+    "DQN": {
+      "library": "stable_baselines3",
+      "class_name": "DQN",
+      "policy": "CnnPolicy",
+      "enabled": true,
+      "requires_discrete_action_space": true,
+      "source": "RL Zoo Atari DQN baseline values, shortened run budget for pilot. Replay buffer is RAM-capped for this 300k pilot; restore 1000000 only on a machine with enough RAM.",
+      "n_envs": 1,
+      "smoke_timesteps": 256,
+      "params": {
+        "learning_rate": 0.0001,
+        "buffer_size": 100000,
+        "learning_starts": 10000,
+        "batch_size": 32,
+        "train_freq": 4,
+        "gradient_steps": 1,
+        "target_update_interval": 1000,
+        "exploration_fraction": 0.3,
+        "exploration_final_eps": 0.01
+      }
+    },
+    "PPO": {
+      "library": "stable_baselines3",
+      "class_name": "PPO",
+      "policy": "CnnPolicy",
+      "enabled": true,
+      "requires_discrete_action_space": true,
+      "source": "Atari PPO pass aligned with RL Zoo/CleanRL defaults: vectorized CnnPolicy, Atari preprocessing, reward clipping, fire reset, entropy bonus, linear LR/clip schedules, and orthogonal initialization.",
+      "n_envs": 8,
+      "smoke_timesteps": 256,
+      "env": {
+        "repeat_action_probability": 0.0,
+        "clip_reward": true,
+        "fire_reset": true
+      },
+      "eval_env": {
+        "terminal_on_life_loss": false
+      },
+      "params": {
+        "learning_rate": "lin_0.00025",
+        "n_steps": 128,
+        "batch_size": 256,
+        "n_epochs": 4,
+        "gamma": 0.99,
+        "gae_lambda": 0.95,
+        "clip_range": "lin_0.1",
+        "vf_coef": 0.5,
+        "ent_coef": 0.01,
+        "max_grad_norm": 0.5
+      }
+    },
+    "DiscreteSAC": {
+      "library": "custom",
+      "class_name": "DiscreteSAC",
+      "policy": "CnnPolicy",
+      "enabled": true,
+      "requires_discrete_action_space": true,
+      "status": "approved",
+      "decision_note": "Use custom discrete-action SAC implementation for Atari Discrete action spaces.",
+      "source": "Stable DiscreteSAC-inspired Atari pass: reward clipping, explicit epsilon exploration, finite-gradient guards, average-Q backup, Q clipping, entropy-target penalty, and per-run diagnostics.",
+      "n_envs": 1,
+      "smoke_timesteps": 64,
+      "env": {
+        "repeat_action_probability": 0.0,
+        "clip_reward": true,
+        "fire_reset": true
+      },
+      "eval_env": {
+        "terminal_on_life_loss": false
+      },
+      "params": {
+        "learning_rate": 0.0001,
+        "buffer_size": 100000,
+        "learning_starts": 20000,
+        "batch_size": 32,
+        "tau": 0.005,
+        "gamma": 0.99,
+        "train_freq": 1,
+        "gradient_steps": 1,
+        "target_entropy_scale": 0.6,
+        "alpha_lr": 0.0001,
+        "max_grad_norm": 0.5,
+        "exploration_initial_eps": 0.2,
+        "exploration_final_eps": 0.03,
+        "exploration_fraction": 0.5,
+        "log_interval": 50000,
+        "diagnostic_interval": 50000,
+        "q_backup_mode": "mean",
+        "q_clip_value": 10.0,
+        "entropy_penalty_coef": 0.01
+      }
+    }
+  }
+}

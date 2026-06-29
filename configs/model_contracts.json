@@ -1,0 +1,25 @@
+{
+  "contracts": {
+    "DQN": {
+      "expected_unbatched_shape": [4, 84, 84],
+      "expected_batched_shape_suffix": [4, 84, 84],
+      "expected_tensor_layout": "NCHW",
+      "expected_dtype_before_model": "uint8_or_float32_library_normalized",
+      "expected_range_before_model": "0..255 before SB3 normalization unless normalize_images is disabled"
+    },
+    "PPO": {
+      "expected_unbatched_shape": [4, 84, 84],
+      "expected_batched_shape_suffix": [4, 84, 84],
+      "expected_tensor_layout": "NCHW",
+      "expected_dtype_before_model": "uint8_or_float32_library_normalized",
+      "expected_range_before_model": "0..255 before SB3 normalization unless normalize_images is disabled"
+    },
+    "DiscreteSAC": {
+      "expected_unbatched_shape": [4, 84, 84],
+      "expected_batched_shape_suffix": [4, 84, 84],
+      "expected_tensor_layout": "NCHW",
+      "expected_dtype_before_model": "uint8 converted to float32/0..1 inside custom DiscreteSAC",
+      "expected_range_before_model": "0..255 before internal normalization"
+    }
+  }
+}

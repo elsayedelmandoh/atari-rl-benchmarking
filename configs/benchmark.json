@@ -1,0 +1,81 @@
+{
+  "experiment": {
+    "name": "atari_dqn_ppo_discrete_sac",
+    "seeds": [0, 1, 2, 3, 4],
+    "evaluation_episodes": 100,
+    "full_timesteps": 1000000,
+    "checkpoint_freq": 50000,
+    "notes": "Profiles named as {timesteps}_{seeds}. Edit this block or use the 1m_5seeds profile."
+  },
+  "smoke": {
+    "env_name": "Pong",
+    "seed": 0,
+    "random_steps": 100,
+    "train_timesteps": 256
+  },
+  "profiles": {
+    "64_1seed": {
+      "description": "Tiny code-path check. Not for scientific results.",
+      "timesteps": 64,
+      "seeds": [0],
+      "evaluation_episodes": 1,
+      "checkpoint_freq": 0
+    },
+    "100k_1seed": {
+      "description": "First real pilot requested before full benchmark.",
+      "timesteps": 100000,
+      "seeds": [0],
+      "evaluation_episodes": 20,
+      "checkpoint_freq": 50000
+    },
+    "200k_1seed": {
+      "description": "Second pilot with Atari-tuned PPO/DQN settings and practical DiscreteSAC settings.",
+      "timesteps": 200000,
+      "seeds": [0],
+      "evaluation_episodes": 20,
+      "checkpoint_freq": 100000
+    },
+    "300k_3seeds": {
+      "description": "Multi-seed validation run before full 1m benchmark.",
+      "timesteps": 300000,
+      "seeds": [0],
+      "evaluation_episodes": 50,
+      "checkpoint_freq": 100000
+    },
+    "300k_1seed_ppo_sac_improved": {
+      "description": "Quick DisSac vs PPO.",
+      "timesteps": 300000,
+      "seeds": [0],
+      "evaluation_episodes": 50,
+      "checkpoint_freq": 100000
+    },
+    "1m_1seed_ppo_diagnostic": {
+      "description": "PPO-test.",
+      "timesteps": 1000000,
+      "seeds": [0],
+      "evaluation_episodes": 100,
+      "checkpoint_freq": 100000
+    },
+    "1m_1seed_StaDiscSac_diagnostic": {
+      "description": "Stable DiscreteSAC test.",
+      "timesteps": 1000000,
+      "seeds": [0],
+      "evaluation_episodes": 100,
+      "checkpoint_freq": 100000
+    },
+    "500k_3seeds": {
+      "description": "Multi-seed validation run before full 1m benchmark.",
+      "timesteps": 500000,
+      "seeds": [0],
+      "evaluation_episodes": 100,
+      "checkpoint_freq": 100000
+    },
+    "1m_5seeds": {
+      "description": "Original proposal-scale benchmark.",
+      "timesteps": 1000000,
+      "seeds": [0, 1, 2],
+      "evaluation_episodes": 100,
+      "checkpoint_freq": 100000
+    }
+  }
+}

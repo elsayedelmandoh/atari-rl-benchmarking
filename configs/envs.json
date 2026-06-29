@@ -1,0 +1,19 @@
+{
+  "environments": [
+    {
+      "name": "Pong",
+      "candidate_ids": ["ALE/Pong-v5", "PongNoFrameskip-v4"],
+      "expected_action_space": "Discrete"
+    },
+    {
+      "name": "Breakout",
+      "candidate_ids": ["ALE/Breakout-v5", "BreakoutNoFrameskip-v4"],
+      "expected_action_space": "Discrete"
+    },
+    {
+      "name": "Space Invaders",
+      "candidate_ids": ["ALE/SpaceInvaders-v5", "SpaceInvadersNoFrameskip-v4"],
+      "expected_action_space": "Discrete"
+    }
+  ]
+}
