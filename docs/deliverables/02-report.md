@@ -1,207 +1,346 @@
-# atari rl benchmarking -- final report
+<div align="center">
 
-## 1. methodology
+**CISC 856 - Reinforcement Learning**
 
-### objective
+**Final Project Report**
 
-reproducibly benchmark 3 rl algorithms (dqn, ppo, discretesac) on 3 atari 2600 games (pong, breakout, space invaders) using pixel observations and a nature-style cnn.
+Benchmarking DQN, PPO, and DiscreteSAC on Atari 2600 Games
 
-### games
+**Group 4:**
 
-| game | env id | action space | observation |
-|---|---|---|---|
-| pong | ale/pong-v5 | discrete(4) | rgb (210, 160, 3) |
-| breakout | ale/breakout-v5 | discrete(4) | rgb (210, 160, 3) |
-| space invaders | ale/spaceinvaders-v5 | discrete(6) | rgb (210, 160, 3) |
+Elsayed Elmandoh
 
-### preprocessing pipeline
+Mohamed Hasan
 
-all algorithms share identical preprocessing (verified by runtime contract checks):
+Mohamed Zidan
 
-1. ataripreprocessing: max noop=30, frame skip=4, grayscale, resize to 84x84
-2. framestackobservation: stack 4 frames
-3. final shape: (4, 84, 84), uint8, chw, range 0-255
-4. normalized to [0, 1] before model ingestion (float32 division by 255)
+Mostafa Elofy
 
-### algorithms
+</div>
 
-| algo | source | policy | n_envs | learning_starts | buffer_size |
-|---|---|---|---|---|---|
-| dqn | stable-baselines3 | cnndqn | 1 | 100k | 100k |
-| ppo | stable-baselines3 | cnnpolicy | 8 | n/a (on-policy) | n/a |
-| discretesac | custom (src/models/discrete_sac.py) | nature cnn backbone + 512fc | 1 | 50k | 500k |
+\newpage
 
-**discretesac note:** uses discrete-action sac variant with categorical policy, twin q-networks, target networks, and entropy temperature tuning. not sb3 sac (which is continuous-action). initial implementation showed q-divergence on space invaders at 200k due to buffer turnover (100k buffer overwritten 2x for 200k steps) and missing gradient clipping. fixed by increasing buffer to 500k, adding gradient clipping (max_norm=1.0), and adjusting exploration schedule.
+## 1 - Introduction
 
-### evaluation protocol
+Atari 2600 environments are a standard testbed for deep reinforcement learning because they combine high-dimensional visual observations, delayed rewards, partial observability, action repeat, stochastic initial states, and game-specific control patterns. This project uses Atari as a compact but meaningful benchmark for comparing value-based, policy-gradient, and maximum-entropy reinforcement learning methods under a shared experimental pipeline.
 
-- 20 deterministic evaluation episodes per run
-- evaluation after every run (not during)
-- mean reward, std, min, max recorded
-- reward clipping: default atari wrapper (clip reward to {-1, 0, 1})
+The project focuses on three games: Pong, Breakout, and Space Invaders. These games were selected because they stress different learning behaviors. Pong requires fast paddle tracking and opponent reaction. Breakout requires paddle control, ball recovery, and sustained rallies. Space Invaders requires shooting, lateral positioning, and survival under incoming enemy fire. These differences make the benchmark more informative than testing a single Atari game.
 
-### pilot profiles
+The algorithms are DQN, PPO, and DiscreteSAC. DQN and PPO are implemented using Stable Baselines3 because they are mature reference baselines. SAC is more complicated: the standard Stable Baselines3 SAC implementation is for continuous action spaces, while Atari uses discrete action spaces. Therefore, this project uses a custom `DiscreteSAC` implementation with a categorical policy over the Atari action set.
 
-| profile | timesteps | seeds | purpose |
-|---|---|---|---|---|
-| 100k_1seed | 100,000 | 1 (seed 0) | initial smoke, dqn baseline validation |
-| 200k_1seed | 200,000 | 1 (seed 0) | tuned params for all algos |
-| 1m_5seeds | 1,000,000 | 5 (0-4) | full-scale benchmark (pending) |
+The goal is not only to produce final reward numbers, but to build an end-to-end benchmark system that can be inspected and reproduced. The repository includes configuration files, source code, checkpoints, CSV result files, manifests, diagnostics, TensorBoard logs, input samples, and MP4 playback videos. This follows the project guidance in `docs/project-definition/making-a-rewarding-rl-project.md`: use existing tools where appropriate, define the RL problem rigorously, conduct comprehensive experiments, and discuss failures honestly.
 
----
+The final evidence emphasized in this report is stored in three profile-scoped locations:
 
-## 2. results
+| Algorithm | Final playback folder | Final checkpoint/results folder |
+|---|---|---|
+| DQN | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
+| PPO | `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/` | `evals/checkpoints/1m_1seed_ppo_diagnostic/` |
+| DiscreteSAC | `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/` | `evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/` |
 
-### per-game perf table
+Older and shorter profiles are still discussed because they explain how the benchmark evolved, but the final comparison highlights the folders above.
 
-| profile | algo | game | mean reward | std | max | reward/hour |
-|---|---|---|---|---|---|---|
-| 100k | dqn | pong | -21.0 | 0.0 | -21.0 | -418.6 |
-| 100k | ppo | pong | -21.0 | 0.0 | -21.0 | -379.6 |
-| 100k | discretesac | pong | -21.0 | 0.0 | -21.0 | -51.8 |
-| 100k | dqn | breakout | 7.7 | 3.5 | 15.0 | 143.4 |
-| 100k | ppo | breakout | 0.0 | 0.0 | 0.0 | 0.0 |
-| 100k | discretesac | breakout | 0.0 | 0.0 | 0.0 | 0.0 |
-| 100k | dqn | space invaders | 187.5 | 66.0 | 355.0 | 3556.8 |
-| 100k | ppo | space invaders | 285.0 | 0.0 | 285.0 | 4737.3 |
-| 100k | discretesac | space invaders | 168.3 | 165.7 | 615.0 | 397.1 |
-| 200k | dqn | pong | -21.0 | 0.0 | -21.0 | -342.5 |
-| 200k | ppo | pong | -21.0 | 0.0 | -21.0 | -567.1 |
-| 200k | discretesac | pong | -21.0 | 0.0 | -21.0 | -73.4 |
-| 200k | dqn | breakout | 8.3 | 4.6 | 18.0 | 131.7 |
-| 200k | ppo | breakout | 2.7 | 0.7 | 4.0 | 67.1 |
-| 200k | discretesac | breakout | 0.0 | 0.0 | 0.0 | 0.0 |
-| 200k | dqn | space invaders | 170.0 | 37.5 | 225.0 | 2627.2 |
-| 200k | ppo | space invaders | 285.0 | 0.0 | 285.0 | 7259.0 |
-| 200k | discretesac | space invaders | 0.0 | 0.0 | 0.0 | 0.0 |
+## 2 - Problem Formulation
 
-### key observations
+### Environment Set
 
-**pong (-21.0 across all algos):** all algorithms score -21.0 at both 100k and 200k timesteps. this is expected -- pong requires >1 million timesteps for standard dqn/ppo to show positive reward. the policy consistently loses 21-0 to the cpu opponent. no meaningful comparison possible at this budget.
+The benchmark uses Gymnasium with the Arcade Learning Environment. Environment IDs are resolved through `configs/envs.json` and `src/utils/data_acquisition.py`.
 
-**breakout (dqn leads):** dqn achieves 7.7 (100k) and 8.3 (200k) -- modest positive return. ppo learns slowly, reaching only 2.7 at 200k. discretesac fails to learn (0.0 at both profiles), likely requiring more timesteps or different hyperparams. dqn > ppo >> discretesac for breakout at 200k.
+| Game | Resolved environment | Main challenge |
+|---|---|---|
+| Pong | `ALE/Pong-v5` | Track ball position and move paddle reactively |
+| Breakout | `ALE/Breakout-v5` | Keep ball alive, return shots, break bricks |
+| Space Invaders | `ALE/SpaceInvaders-v5` | Shoot enemies while moving and avoiding bullets |
 
-**space invaders (ppo dominates):** ppo achieves 285.0 (ceiling for this env at low difficulty framing) at both 100k and 200k, with zero variance. dqn achieves 187.5 (100k) and 170.0 (200k) with moderate variance. discretesac starts at 168.3 (100k) but pre-fix collapses to 0.0 at 200k due to q-divergence from buffer turnover. fix applied (buffer 500k + gradient clipping) but needs re-validation with new run.
+### State Space
 
-### training time
+At each time step, the raw Atari state is an RGB frame:
 
-| algo | avg 100k (min) | avg 200k (min) | notes |
-|---|---|---|---|
-| dqn | ~3.1 | ~3.8 | sb3, cpu, 1 env |
-| ppo | ~3.4 | ~2.3 | sb3, cpu, 8 vec envs (faster wall-clock) |
-| discretesac | ~25.0 | ~17.3 | custom, cpu, 1 env, slow forward pass |
+```text
+s_raw in {0, ..., 255}^(210 x 160 x 3)
+```
 
-discretesac is 5-7x slower than sb3 baselines on cpu due to pure python training loop (no c++ backend). this limits its viability for large-scale atari benchmarks without gpu.
+The benchmark does not feed raw RGB frames directly to the models. All algorithms share the same preprocessing pipeline from `configs/preprocessing.json`:
 
-### statistical tests
+1. no-op reset with `noop_max = 30`;
+2. frame skip/action repeat with `frame_skip = 4`;
+3. grayscale conversion;
+4. resize to `84 x 84`;
+5. stack the four most recent processed frames.
 
-pairwise welch's t-tests on evaluation episode variance (20 episodes per run):
+The final model input is:
 
-**space invaders (100k):**
-- ppo (285.0) vs dqn (187.5): p < 0.001 ***
-- ppo (285.0) vs discretesac (168.3): p = 0.005 **
-- dqn (187.5) vs discretesac (168.3): p = 0.633 (not significant)
+```text
+s in {0, ..., 255}^(4 x 84 x 84)
+```
 
-**space invaders (200k):**
-- ppo (285.0) vs dqn (170.0): p < 0.001 ***
-- ppo (285.0) vs discretesac (0.0): p < 0.001 ***
-- dqn (170.0) vs discretesac (0.0): p < 0.001 ***
+The layout is channel-first `(C, H, W)`, dtype is `uint8`, and model code normalizes observations to `[0, 1]` before neural-network computation. The input contract is checked before training: shape, dtype, range, layout, contiguity, batch dimension, and prediction compatibility are validated.
 
-**breakout (200k):**
-- dqn (8.3) vs ppo (2.7): p < 0.001 ***
-- dqn (8.3) vs discretesac (0.0): p < 0.001 ***
-- ppo (2.7) vs discretesac (0.0): p < 0.001 ***
+### Action Space
 
-pong not tested (zero variance across all conditions yields nan t-stat).
+Each Atari environment has a discrete action space:
 
-**caveat:** these tests use episode-level variance within a single seed, not seed variance. multi-seed analysis needed for robust conclusions.
+```text
+a in {0, 1, ..., n - 1}
+```
 
----
+Breakout uses four actions in this setup. Pong and Space Invaders use six actions, generally corresponding to combinations such as `NOOP`, `FIRE`, `RIGHT`, `LEFT`, `RIGHTFIRE`, and `LEFTFIRE`. Playback now records action meanings when available, because action counts are easier to interpret when the report can connect action IDs to game controls.
 
-## 3. figures
+### Reward Function
 
-figures saved to `evals/figures/`:
-- `mean_reward.png` -- bar chart with error bars per (profile, algo, game)
-- `max_reward.png` -- max reward per condition
-- `reward_per_hour.png` -- sample efficiency comparison
-- `training_time.png` -- wall-clock training time
+The environment reward is the score delta returned by ALE:
 
----
+```text
+r_t = R(s_t, a_t, s_{t+1})
+```
 
-## 4. regression fix: discretesac space invaders
+Training uses reward clipping where configured:
 
-### problem
+```text
+clipped_reward = clip(r_t, -1, 1)
+```
 
-discretesac achieved 168.25 mean return at 100k steps but collapsed to 0.0 at 200k steps on space invaders. dqn and ppo did not show this pattern.
+Evaluation reports accumulated game reward across full episodes. The benchmark records mean reward, standard deviation, minimum, maximum, wall-clock training time, reward per hour, checkpoint paths, diagnostics paths, playback paths, playback step counts, and playback action counts.
 
-### root cause
+No custom shaping reward was added for aiming, dodging, or paddle tracking. For example, Space Invaders does not directly reward dodging bullets; survival is learned indirectly from longer episodes and continued scoring opportunities. This is important when interpreting weak Space Invaders policies that learn to shoot but do not dodge well.
 
-| factor | detail |
+## 3 - Solution Overview
+
+### Repository Architecture
+
+The project is organized as a reproducible benchmark pipeline.
+
+| Path | Purpose |
 |---|---|
-| buffer turnover | buffer_size=100k for 200k training steps: buffer overwritten 2x. early good experiences evicted, no corrective signal from past success. |
-| q-divergence | no gradient clipping allowed q-network to diverge once buffer contained self-reinforcing bad data. |
-| early training start | learning_starts=10k (vs dqn's 100k) meant policy trained on minimal data, noisier initial q-estimates. |
-| target entropy | scale=0.98 barely constrained policy (target=1.756 vs max 1.792 nats for 6-action si), allowing premature determinism. |
+| `app.py` | Main benchmark runner: profiles, locks, training, evaluation, playback, CSV/manifest writing |
+| `configs/` | Algorithms, environments, preprocessing, profiles, model contracts, defaults |
+| `src/config/` | Settings, logging, config loading, config hashing |
+| `src/utils/` | Atari environment construction, wrappers, seed/device helpers |
+| `src/models/` | DQN, PPO, DiscreteSAC, SB3 bridge, training/evaluation harness |
+| `src/evaluation/` | Input validation, metadata, metrics, reporting helpers |
+| `src/inference/` | Playback regeneration from saved checkpoints |
+| `evals/` | Checkpoints, result CSVs, manifests, diagnostics, figures |
+| `artifacts/` | Input frame samples and playback videos |
+| `logs/` | TensorBoard event files and process logs |
+| `docs/` | Proposal, project definition, reference guide, final report |
 
-### fixes applied
+### Experiment Profiles
 
-1. buffer_size: 100000 -> 500000 (prevents full overwrite)
-2. gradient clipping: added `clip_grad_norm_` at max_norm=1.0 on q1, q2, actor
-3. learning_starts: 10000 -> 50000 (more random exploration before policy training)
-4. target_entropy_scale: 0.98 -> 0.6 (stronger exploration pressure)
-5. added verbose logging: q-values, entropy, alpha, actor loss every 1000 steps
+The benchmark is profile-based. A profile controls timesteps, seeds, evaluation episodes, and checkpoint frequency. Important profiles include:
 
-### verification
+| Profile | Purpose |
+|---|---|
+| `100k_1seed` | Early pilot across all algorithms and games |
+| `200k_1seed` | Tuned pilot after initial stability issues |
+| `300k_1seed_ppo_sac_improved` | Quick PPO and DiscreteSAC comparison, DQN excluded |
+| `1m_5seeds` | Main DQN benchmark and multi-seed comparison folder |
+| `1m_1seed_ppo_diagnostic` | PPO-only diagnostic run |
+| `1m_1seed_StaDiscSac_diagnostic` | Stable DiscreteSAC diagnostic run |
 
-smoke profile (9 runs x 64 steps) passes with 0 failures post-fix. full 200k_1seed re-run needed to confirm 200k space invaders returns positive after fix.
+Outputs are profile-scoped:
 
----
+```text
+evals/checkpoints/<profile>/
+  <profile>_results_<timestamp>.csv
+  <profile>_manifest_<timestamp>.json
+  <game>/<algo>/seed_<seed>/
+    final_model.zip       # DQN/PPO
+    final_model.pt        # DiscreteSAC
+    *_steps.zip or *.pt
+    ppo_diagnostics.csv
+    discrete_sac_diagnostics.csv
 
-## 5. limitations
+artifacts/evaluation/playback/<profile>/
+  <game>/<algo>/*.mp4
+```
 
-### single seed (critical)
+### Algorithms
 
-all pilot results use only seed 0. conclusions about relative algorithm performance may not generalize across seeds. planned 1m_5seeds profile (5 seeds) will address this.
+#### DQN
 
-### cpu-only training
+DQN is implemented with Stable Baselines3 using `CnnPolicy`. It is the most stable baseline in this project and should mostly be treated as the reference value-learning agent. It uses a replay buffer, target network updates, epsilon-greedy exploration, and one environment.
 
-torch 2.12.1+cu126 -- cuda available (rtx 5000 ada, 30gb vram). discretesac runs 5-7x slower than sb3 baselines, making its results less practical but now feasible at scale.
+The final DQN evidence is:
 
-### limited timesteps
+- playback: `artifacts/evaluation/playback/1m_5seeds/`;
+- checkpoints/results: `evals/checkpoints/1m_5seeds/`.
 
-at 100k-200k timesteps, most atari games are still in early learning phase. pong at -21.0 is expected (needs 2-10m steps for positive reward). results represent early learning behavior, not converged performance.
+#### PPO
 
-### single env per method
+PPO is implemented with Stable Baselines3 using `CnnPolicy` and vectorized environments. It uses clipped policy optimization, generalized advantage estimation, entropy regularization, and eight environments. PPO was given a dedicated diagnostic profile because the earlier 300k playback looked collapsed: Pong repeated one action, Breakout showed weak short-episode paddle behavior, and Space Invaders repeated one action.
 
-dqn and discretesac use n_envs=1 (off-policy). ppo uses n_envs=8 (on-policy, standard). this affects wall-clock comparison because ppo processes data faster but uses more environment interactions per step.
+The PPO diagnostic profile added:
 
-### no learning curves
+- PPO-specific diagnostics through `ppo_diagnostics.csv`;
+- result CSV playback metadata;
+- profile-specific checkpoint and playback folders.
 
-csv results only contain final evaluation metrics. per-step learning curves were not logged (sb3 tensorboard events exist at logs/ but not parsed into analysis).
+The final PPO evidence is:
 
----
+- playback: `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/`;
+- checkpoints/results: `evals/checkpoints/1m_1seed_ppo_diagnostic/`.
 
-## 6. conclusion
+#### DiscreteSAC
 
-### at 200k timesteps:
+DiscreteSAC is custom because standard SB3 SAC is continuous-action. The project uses a categorical policy for Atari actions, twin Q networks, target Q networks, replay buffer storage, entropy temperature tuning, and diagnostics.
 
-- **ppo** is the strongest performer on space invaders (285.0, ceiling score) and reasonably sample-efficient.
-- **dqn** is the most consistent across games -- modest positive results on breakout (8.3) and space invaders (170.0) with moderate variance.
-- **discretesac** (custom) underperforms sb3 baselines. it matches dqn on space invaders at 100k (168.3) but is fragile at longer horizons without stability fixes. the custom implementation adds implementation risk without clear performance benefit in this setting.
+The DiscreteSAC implementation evolved significantly during the project. Earlier versions were fragile on Atari. Diagnostic work showed two separate issues:
 
-### recommendation
+1. the training algorithm needed more stable hyperparameters;
+2. deterministic playback could make a non-deterministic policy look completely collapsed.
 
-for near-term atari benchmarking, ppo (sb3) + dqn (sb3) provide reliable baselines. the custom discretesac needs more development (gpu training, tuned hyperparameters, target network improvements) before it can serve as a stable baseline. consider replacing with sb3's qrdqn or remaster as alternatives for the sac-family atari representation.
+The final DiscreteSAC evidence is:
 
----
+- playback: `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/`;
+- checkpoints/results: `evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/`.
 
-## 7. discretesac decision note
+### Problems Found And Solutions Implemented
 
-this project uses a custom `discretesac` implementation (not sb3 sac) because sb3 sac targets continuous action spaces. the custom implementation:
+The project improved through several debugging cycles. The main problems and fixes are summarized below.
 
-- uses categorical policy over atari discrete action set
-- twin q-networks with target networks and polyak averaging (tau=0.005)
-- entropy temperature tuning via dual gradient descent
-- same preprocessing pipeline as dqn/ppo
+| Problem | Evidence | Solution |
+|---|---|---|
+| Need to prevent overlapping runs in the same profile | Long runs could accidentally reuse the same output folder | Added profile locking in `app.py` |
+| Need to run only selected algorithms | Diagnostics required PPO-only and DiscreteSAC-only runs | Added `--algo` support with multiple algorithm names |
+| Need visual inspection, not only reward tables | Playback revealed behavior collapse that scores alone hid | Added MP4 playback recording per model/game/seed |
+| Playback should match evaluation environment | Training wrappers and eval wrappers differed | Playback now uses eval env overrides |
+| Results needed provenance | Hard to connect CSV rows to checkpoints/videos | CSV rows now include playback info and diagnostics path |
+| PPO 300k playback looked collapsed | Repeated one action in Pong/Space Invaders | Added `1m_1seed_ppo_diagnostic` and `ppo_diagnostics.csv` |
+| DiscreteSAC used continuous-SAC assumptions originally avoided | Atari actions are discrete | Kept custom `DiscreteSAC`, not SB3 continuous SAC |
+| DiscreteSAC gradients/Q-values could become unstable | Early Space Invaders collapse and weak behavior | Added finite-gradient guards, clipping, action logging, diagnostics |
+| Earlier DiscreteSAC deterministic playback repeated one action | Pong paddle did not move usefully; Space Invaders only fired | DiscreteSAC eval/playback now supports stochastic policy sampling |
+| Breakout playback could stall after ball passed paddle | Video kept recording but ball was not served again | Added post-life FIRE wrapper for full-game eval/playback |
+| Need easier playback regeneration | Multiline PowerShell commands were inconvenient | Added `python -m src.inference.record_playback <profile> <env>` |
+| DiscreteSAC still underperformed reference Atari SAC recipes | Pong/Space Invaders policies remained weak | Updated recipe toward reference Atari SAC: higher entropy target, min-Q backup, delayed updates, larger batch, target refresh cadence |
 
-standard sb3 sac is intentionally excluded because it does not support discrete actions.
+## 4 - Results
+
+This section reports all major benchmark evidence, but highlights the final result folders requested for each algorithm.
+
+### Final Evidence Folders
+
+| Algorithm | Final profile | Playback evidence | Checkpoint/result evidence |
+|---|---|---|---|
+| DQN | `1m_5seeds` | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
+| PPO | `1m_1seed_ppo_diagnostic` | `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/` | `evals/checkpoints/1m_1seed_ppo_diagnostic/` |
+| DiscreteSAC | `1m_1seed_StaDiscSac_diagnostic` | `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/` | `evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/` |
+
+### Evaluation Figures
+
+The generated figures are stored in `evals/figures/`. They summarize the benchmark from complementary views: mean reward, best observed reward, reward normalized by wall-clock time, and training time.
+
+![Mean reward by algorithm and game](../../evals/figures/mean_reward.png)
+
+**Figure 1. Mean reward.** This plot compares average evaluation reward across benchmark conditions. It is the main quantitative view for judging final policy performance.
+
+![Maximum reward by algorithm and game](../../evals/figures/max_reward.png)
+
+**Figure 2. Maximum reward.** This plot shows the best episode score reached in evaluation. It helps identify policies that occasionally perform well even when their mean performance is unstable.
+
+![Reward per hour by algorithm and game](../../evals/figures/reward_per_hour.png)
+
+**Figure 3. Reward per hour.** This plot normalizes reward by training wall-clock time. It is useful because PPO, DQN, and custom DiscreteSAC have very different runtime costs.
+
+![Training time by algorithm and game](../../evals/figures/training_time.png)
+
+**Figure 4. Training time.** This plot compares wall-clock training time. It highlights the engineering cost of the custom DiscreteSAC loop relative to the Stable Baselines3 implementations.
+
+### DQN Final Results: `1m_5seeds`
+
+DQN is the most stable final baseline. The `1m_5seeds` profile contains five seeds for each game. Each seed was evaluated over 100 episodes.
+
+| Game | Seeds | Mean of seed means | Seed std | Best episode max |
+|---|---:|---:|---:|---:|
+| Pong | 5 | -8.14 | 9.27 | 19 |
+| Breakout | 5 | 14.66 | 3.29 | 43 |
+| Space Invaders | 5 | 324.66 | 23.64 | 895 |
+
+Interpretation: DQN learned the strongest overall policies among the completed stable baselines. It was especially strong on Space Invaders and produced the best completed multi-seed Pong performance. The Pong seed standard deviation is high, which means DQN is sensitive to random seed at the 1M-step budget, but it still shows meaningful learning in some seeds.
+
+### PPO Final Diagnostic Results: `1m_1seed_ppo_diagnostic`
+
+The PPO final evidence comes from the dedicated 1M diagnostic profile. This profile was created because earlier 300k playback looked collapsed and because reference Atari PPO setups often require much larger budgets than 300k.
+
+| Game | Seed | Mean | Std | Max | Playback steps | Playback action counts |
+|---|---:|---:|---:|---:|---:|---|
+| Pong | 0 | -14.60 | 7.20 | -3 | 2,362 | `{"2": 1259, "3": 1082, "5": 21}` |
+| Breakout | 0 | 6.93 | 2.39 | 9 | 5,000 | `{"0": 4861, "1": 68, "2": 35, "3": 36}` |
+| Space Invaders | 0 | 25.03 | 4.55 | 31 | 843 | `{"4": 345, "5": 498}` |
+
+Interpretation: PPO improved over the short 300k diagnostic in Pong but remained weak overall at this configuration. Breakout learned some paddle behavior but did not match the main DQN benchmark. Space Invaders remained particularly weak in this PPO diagnostic. The diagnostic result suggests undertraining and/or hyperparameter mismatch rather than a broken pipeline, because PPO action diagnostics and playback show nontrivial but low-quality behavior.
+
+### DiscreteSAC Final Diagnostic Results: `1m_1seed_StaDiscSac_diagnostic`
+
+The final DiscreteSAC evidence comes from the Stable DiscreteSAC diagnostic profile after the playback and training-recipe fixes discussed above.
+
+| Game | Seed | Mean | Std | Max | Playback steps | Playback action counts |
+|---|---:|---:|---:|---:|---:|---|
+| Pong | 42 | 18.77 | 2.51 | 21 | 1,650 | `{"0": 310, "1": 270, "2": 196, "3": 314, "4": 229, "5": 331}` |
+| Breakout | 42 | 37.42 | 12.02 | 85 | 1,021 | `{"0": 281, "1": 280, "2": 219, "3": 241}` |
+| Space Invaders | 42 | 29.44 | 5.56 | 49 | 1,217 | `{"0": 221, "1": 234, "2": 143, "3": 222, "4": 180, "5": 217}` |
+
+Interpretation: the final DiscreteSAC diagnostic is much better than the earlier collapsed playback behavior. Pong and Breakout improved substantially in this one-seed diagnostic, and action counts show that playback is no longer stuck on one deterministic action. Space Invaders still remains weak: it samples across actions but does not yet show strong aiming or dodging. This matches the qualitative observation that Space Invaders requires longer-horizon credit assignment and may need more timesteps or a closer SD-SAC implementation.
+
+### Broader Benchmark Context
+
+Older pilot profiles are still useful for understanding the project development.
+
+| Profile | Algorithm | Pong | Breakout | Space Invaders |
+|---|---|---:|---:|---:|
+| `100k_1seed` | DQN | -21.00 | 7.65 | 187.50 |
+| `100k_1seed` | PPO | -21.00 | 0.00 | 285.00 |
+| `100k_1seed` | DiscreteSAC | -21.00 | 0.00 | 168.25 |
+| `200k_1seed` | DQN | -21.00 | 8.25 | 170.00 |
+| `200k_1seed` | PPO | -21.00 | 2.70 | 285.00 |
+| `200k_1seed` | DiscreteSAC | -21.00 | 0.00 | 0.00 |
+
+The short pilots showed that 100k-200k timesteps were not enough for reliable Pong behavior and that the earlier DiscreteSAC settings were fragile. These failures were useful because they led to the diagnostic profiles, action logging, playback generation, stochastic DiscreteSAC playback, and the newer stable recipe.
+
+### Qualitative Playback Findings
+
+Playback videos changed the interpretation of the numeric results. PPO and DiscreteSAC sometimes produced action distributions that looked acceptable in CSV form but poor in video. The most important qualitative observations were:
+
+- Pong requires coherent ball tracking; random-looking paddle movement is not enough.
+- Breakout can look good until life loss; without post-life FIRE handling, full-game video can appear stuck.
+- Space Invaders can get nonzero score by shooting, but a good policy should also move, aim, and dodge.
+
+This is why the final benchmark keeps both CSV metrics and MP4 playback videos.
+
+## 5 - Conclusion
+
+This project produced a complete Atari RL benchmarking pipeline and a set of interpretable results across DQN, PPO, and DiscreteSAC. The project includes the core elements expected from a rigorous RL benchmark: defined observation/action/reward spaces, shared preprocessing, controlled configurations, checkpointing, result CSVs, manifests, diagnostics, logs, and playback videos.
+
+The strongest final baseline is DQN. In the `1m_5seeds` profile, DQN achieved the best overall completed multi-seed performance, especially on Space Invaders and Pong. PPO was faster wall-clock and useful as a standard policy-gradient baseline, but the final PPO diagnostic remained weaker than expected at 1M steps. DiscreteSAC required the most debugging because it is custom and less standardized for Atari. After the fixes, the final DiscreteSAC diagnostic improved strongly on Pong and Breakout, but Space Invaders still needs more work.
+
+The main technical problems solved during the project were:
+
+- separating profile outputs and preventing overlapping runs with locks;
+- adding algorithm filtering for focused diagnostics;
+- adding playback videos and playback metadata;
+- adding PPO and DiscreteSAC diagnostics;
+- keeping SAC discrete rather than incorrectly using continuous SAC;
+- fixing DiscreteSAC numerical and policy-collapse issues;
+- fixing Breakout full-game playback after life loss;
+- adding a one-line playback regeneration helper;
+- moving DiscreteSAC hyperparameters closer to reference Atari SAC practice.
+
+The main lesson is that reward tables alone are not enough. A policy can score nonzero while behaving poorly, especially in Space Invaders. Playback and diagnostics are necessary to understand whether an agent is actually learning the intended behavior.
+
+Recommended future work:
+
+1. Run a multi-seed version of the final improved DiscreteSAC diagnostic.
+2. Increase PPO and DiscreteSAC budgets beyond 1M timesteps if time permits.
+3. Add confidence intervals and formal seed-level statistical tests.
+4. Add closer SD-SAC features such as n-step returns and stored entropy penalties.
+5. Parse TensorBoard logs into learning curves for the final report figures.
+
+References used for method direction:
+
+1. Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. "Proximal Policy Optimization Algorithms." arXiv:1707.06347, 2017. https://arxiv.org/abs/1707.06347
+2. Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. "Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor." Proceedings of ICML, 2018. https://arxiv.org/abs/1801.01290
+3. Christodoulou, P. "Soft Actor-Critic for Discrete Action Settings." arXiv:1910.07207, 2019. https://arxiv.org/abs/1910.07207
+4. Stable Baselines3 Contributors. "Stable Baselines3 Documentation: DQN and PPO." https://stable-baselines3.readthedocs.io/
+5. Huang, S., Dossa, R. F. J., Raffin, A., Kanervisto, A., and Wang, W. "CleanRL: High-quality single-file implementations of deep reinforcement learning algorithms." Journal of Machine Learning Research, 2022. https://github.com/vwxyzjn/cleanrl
+6. Zhou, H., Lan, T., and Aggarwal, V. "Revisiting Discrete Soft Actor-Critic." arXiv:2209.10081, 2022. https://arxiv.org/abs/2209.10081
+
+Project repository: [elsayedelmandoh/atari-rl-benchmarking](https://github.com/elsayedelmandoh/atari-rl-benchmarking)

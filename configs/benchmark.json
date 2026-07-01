@@ -59,7 +59,7 @@
     "1m_1seed_StaDiscSac_diagnostic": {
       "description": "Stable DiscreteSAC test.",
       "timesteps": 1000000,
-      "seeds": [0],
+      "seeds": [42],
       "evaluation_episodes": 100,
       "checkpoint_freq": 100000
     },

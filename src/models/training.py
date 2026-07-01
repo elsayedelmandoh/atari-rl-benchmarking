@@ -160,6 +160,7 @@ def evaluate_model(
     seed: int,
     episodes: int,
     env_overrides: dict[str, Any] | None = None,
+    deterministic: bool = True,
 ) -> dict[str, float]:
     import numpy as np
 
@@ -170,7 +171,7 @@ def evaluate_model(
         done = False
         total = 0.0
         while not done:
-            action, _ = model.predict(obs, deterministic=True)
+            action, _ = model.predict(obs, deterministic=deterministic)
             obs, reward, terminated, truncated, _ = env.step(action)
             total += float(reward)
             done = bool(terminated or truncated)
@@ -268,7 +269,15 @@ def train_and_evaluate(
             final_model_path = None
 
     elapsed = time.perf_counter() - start
-    eval_stats = evaluate_model(model, env_id, seed, eval_episodes, env_overrides=eval_env_overrides)
+    eval_deterministic = bool(algo_cfg.get("eval_deterministic", True))
+    eval_stats = evaluate_model(
+        model,
+        env_id,
+        seed,
+        eval_episodes,
+        env_overrides=eval_env_overrides,
+        deterministic=eval_deterministic,
+    )
     env.close()
 
     return {
@@ -293,4 +302,5 @@ def train_and_evaluate(
         "CheckpointDir": str(checkpoint_dir) if checkpoint_dir else "",
         "FinalModelPath": str(final_model_path) if final_model_path else "",
         "DiagnosticsPath": str(diagnostics_path) if diagnostics_path else "",
+        "EvalDeterministic": eval_deterministic,
     }

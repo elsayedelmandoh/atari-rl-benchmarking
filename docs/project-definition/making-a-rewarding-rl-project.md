@@ -43,8 +43,7 @@ functions in your Methodology!
 ## What we expect (no matter the type of project)
 • Finish the project!
 ⁃ Environment + Algorithms
-⁃ The task does not need to be successfully completed, but we need to see significant progress
-and attempts at solving it
+⁃ The task does not need to be successfully completed, but we need to see significant progress and attempts at solving it
 ⁃ Use existing tools
 • Gymnasium
 • Stable Baselines 3 (don’t code your RL algorithm from scratch)

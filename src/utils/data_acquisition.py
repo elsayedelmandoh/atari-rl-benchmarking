@@ -72,6 +72,61 @@ def make_raw_env(
     return env
 
 
+def _wrap_fire_after_life_loss(env: Any):
+    import gymnasium as gym
+
+    class FireAfterLifeLossEnv(gym.Wrapper):
+        """Press FIRE once after non-terminal life loss to keep full-game eval moving."""
+
+        def __init__(self, wrapped_env: Any) -> None:
+            super().__init__(wrapped_env)
+            self.fire_action = self._find_fire_action()
+            self.lives = 0
+
+        def _find_fire_action(self) -> int | None:
+            try:
+                meanings = self.unwrapped.get_action_meanings()
+            except Exception:
+                return None
+            for idx, meaning in enumerate(meanings):
+                if meaning == "FIRE":
+                    return idx
+            for idx, meaning in enumerate(meanings):
+                if "FIRE" in meaning:
+                    return idx
+            return None
+
+        def _ale_lives(self) -> int:
+            try:
+                return int(self.unwrapped.ale.lives())
+            except Exception:
+                return 0
+
+        def reset(self, **kwargs: Any):
+            obs, info = self.env.reset(**kwargs)
+            self.lives = self._ale_lives()
+            return obs, info
+
+        def step(self, action: int):
+            obs, reward, terminated, truncated, info = self.env.step(action)
+            current_lives = self._ale_lives()
+            lost_life = self.lives > 0 and current_lives > 0 and current_lives < self.lives
+            self.lives = current_lives
+
+            if lost_life and not (terminated or truncated) and self.fire_action is not None:
+                fire_obs, fire_reward, fire_terminated, fire_truncated, fire_info = self.env.step(self.fire_action)
+                obs = fire_obs
+                reward += fire_reward
+                terminated = terminated or fire_terminated
+                truncated = truncated or fire_truncated
+                info.update(fire_info)
+                self.lives = self._ale_lives()
+
+            return obs, reward, terminated, truncated, info
+
+    return FireAfterLifeLossEnv(env)
+
+
 def make_atari_env(
     env_id: str,
     seed: int | None = None,
@@ -96,6 +151,8 @@ def make_atari_env(
         from stable_baselines3.common.atari_wrappers import FireResetEnv
 
         env = FireResetEnv(env)
+    if pre.get("fire_after_life_loss", False):
+        env = _wrap_fire_after_life_loss(env)
     if pre.get("clip_reward", False):
         from stable_baselines3.common.atari_wrappers import ClipRewardEnv
 
