@@ -27,13 +27,13 @@ data/test/*
 *.npz
 
 # --- model / pipeline artifacts ---
-artifacts/**/*
 !artifacts/**/.gitkeep
 *.pt
 *.pth
 *.zip
 *.onnx
-*.mp4
+
+
 
 # --- scripts ---
 scripts/
