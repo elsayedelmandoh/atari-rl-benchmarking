@@ -43,7 +43,7 @@ The benchmark uses pixel observations, shared Atari preprocessing, runtime input
 The main deliverable report is available at:
 
 ```text
-docs/deliverables/02-report.md
+docs/deliverables/02-report.pdf
 ```
 
 ## Key Features

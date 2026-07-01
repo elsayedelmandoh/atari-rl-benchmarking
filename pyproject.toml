@@ -67,7 +67,7 @@ packages = ["src/"]
 
 [project.urls]
 repository = "https://github.com/elsayedelmandoh/atari-rl-benchmarking"
-report = "https://github.com/elsayedelmandoh/atari-rl-benchmarking/blob/main/docs/deliverables/02-report.md"
+report = "https://github.com/elsayedelmandoh/atari-rl-benchmarking/blob/main/docs/deliverables/02-report.pdf"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
