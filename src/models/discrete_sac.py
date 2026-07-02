@@ -86,7 +86,16 @@ def build_policy(in_channels: int, action_dim: int):
     from torch import nn
 
     backbone = NatureBackbone(in_channels)
-    return nn.Sequential(backbone.nn, nn.Linear(backbone.features_dim, 512), nn.ReLU(), nn.Linear(512, action_dim))
+    model = nn.Sequential(backbone.nn, nn.Linear(backbone.features_dim, 512), nn.ReLU(), nn.Linear(512, action_dim))
+    for module in model.modules():
+        if isinstance(module, (nn.Conv2d, nn.Linear)):
+            nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
+            if module.bias is not None:
+                nn.init.constant_(module.bias, 0.0)
+    final_layer = model[-1]
+    if isinstance(final_layer, nn.Linear):
+        nn.init.uniform_(final_layer.weight, -1e-3, 1e-3)
+    return model
 
 
 class DiscreteSAC:
@@ -112,8 +121,10 @@ class DiscreteSAC:
         tau: float = 0.005,
         train_freq: int = 1,
         gradient_steps: int = 1,
+        target_update_interval: int = 1,
         target_entropy_scale: float = 0.6,
         alpha_lr: float = 3e-4,
+        optimizer_eps: float = 1e-8,
         max_grad_norm: float = 1.0,
         exploration_initial_eps: float = 0.0,
         exploration_final_eps: float = 0.0,
@@ -147,6 +158,7 @@ class DiscreteSAC:
         self.batch_size = int(batch_size)
         self.train_freq = int(train_freq)
         self.gradient_steps = int(gradient_steps)
+        self.target_update_interval = max(int(target_update_interval), 1)
         self.max_grad_norm = float(max_grad_norm)
         self.target_entropy = -target_entropy_scale * np.log(1.0 / self.action_dim)
         self.exploration_initial_eps = float(exploration_initial_eps)
@@ -177,11 +189,11 @@ class DiscreteSAC:
         self.q1_target.load_state_dict(self.q1.state_dict())
         self.q2_target.load_state_dict(self.q2.state_dict())
 
-        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=learning_rate)
-        self.q1_opt = torch.optim.Adam(self.q1.parameters(), lr=learning_rate)
-        self.q2_opt = torch.optim.Adam(self.q2.parameters(), lr=learning_rate)
+        self.actor_opt = torch.optim.Adam(self.actor.parameters(), lr=learning_rate, eps=optimizer_eps)
+        self.q1_opt = torch.optim.Adam(self.q1.parameters(), lr=learning_rate, eps=optimizer_eps)
+        self.q2_opt = torch.optim.Adam(self.q2.parameters(), lr=learning_rate, eps=optimizer_eps)
         self.log_alpha = torch.zeros((), device=self.device, requires_grad=True)
-        self.alpha_opt = torch.optim.Adam([self.log_alpha], lr=alpha_lr)
+        self.alpha_opt = torch.optim.Adam([self.log_alpha], lr=alpha_lr, eps=optimizer_eps)
         self.buffer = ReplayBuffer(buffer_size, obs_shape)
         self.num_timesteps = 0
 
@@ -255,8 +267,9 @@ class DiscreteSAC:
             self.num_timesteps += 1
 
             if len(self.buffer) >= self.learning_starts and step % self.train_freq == 0:
+                update_targets = step % self.target_update_interval == 0
                 for _ in range(self.gradient_steps):
-                    self._update()
+                    self._update(update_targets=update_targets)
 
             if done:
                 obs, _ = self.env.reset()
@@ -290,7 +303,7 @@ class DiscreteSAC:
         optimizer.step()
         return True
 
-    def _update(self) -> None:
+    def _update(self, update_targets: bool = True) -> None:
         import torch
         import torch.nn.functional as F  # noqa: N812
 
@@ -339,7 +352,9 @@ class DiscreteSAC:
             return
 
         entropy = entropy_per_obs.detach().mean()
-        alpha_loss = self.log_alpha * (entropy - self.target_entropy)
+        alpha_loss = (
+            probs.detach() * (-self.alpha * (log_probs.detach() + self.target_entropy))
+        ).sum(dim=1).mean()
         self.alpha_opt.zero_grad(set_to_none=True)
         alpha_loss.backward()
         torch.nn.utils.clip_grad_norm_([self.log_alpha], self.max_grad_norm)
@@ -347,8 +362,9 @@ class DiscreteSAC:
         with torch.no_grad():
             self.log_alpha.clamp_(-5.0, 2.0)
 
-        self._soft_update(self.q1, self.q1_target)
-        self._soft_update(self.q2, self.q2_target)
+        if update_targets:
+            self._soft_update(self.q1, self.q1_target)
+            self._soft_update(self.q2, self.q2_target)
 
         if self.verbose > 0 and self.num_timesteps % 1000 == 0:
             with torch.no_grad():
@@ -438,6 +454,7 @@ class DiscreteSAC:
             "TargetEntropy",
             "QBackupMode",
             "QClipValue",
+            "TargetUpdateInterval",
             "EntropyPenaltyCoef",
             "MeanQ",
             "MeanTargetQ",
@@ -464,6 +481,7 @@ class DiscreteSAC:
             "TargetEntropy": round(float(self.target_entropy), 6),
             "QBackupMode": self.q_backup_mode,
             "QClipValue": "" if self.q_clip_value is None else self.q_clip_value,
+            "TargetUpdateInterval": self.target_update_interval,
             "EntropyPenaltyCoef": self.entropy_penalty_coef,
         }
         row.update(self.latest_update_stats)

@@ -36,7 +36,8 @@
         "fire_reset": true
       },
       "eval_env": {
-        "terminal_on_life_loss": false
+        "terminal_on_life_loss": false,
+        "fire_after_life_loss": true
       },
       "params": {
         "learning_rate": "lin_0.00025",
@@ -59,7 +60,7 @@
       "requires_discrete_action_space": true,
       "status": "approved",
       "decision_note": "Use custom discrete-action SAC implementation for Atari Discrete action spaces.",
-      "source": "Stable DiscreteSAC-inspired Atari pass: reward clipping, explicit epsilon exploration, finite-gradient guards, average-Q backup, Q clipping, entropy-target penalty, and per-run diagnostics.",
+      "source": "Stable DiscreteSAC-inspired Atari pass aligned closer to CleanRL Atari SAC defaults: reward clipping, policy sampling, higher entropy target, delayed updates, min-Q backup, hard target refresh cadence, and per-run diagnostics.",
       "n_envs": 1,
       "smoke_timesteps": 64,
       "env": {
@@ -68,28 +69,34 @@
         "fire_reset": true
       },
       "eval_env": {
-        "terminal_on_life_loss": false
+        "terminal_on_life_loss": false,
+        "fire_after_life_loss": true
       },
+      "eval_deterministic": false,
+      "playback_deterministic": false,
+      "playback_max_steps": 20000,
       "params": {
-        "learning_rate": 0.0001,
+        "learning_rate": 0.0003,
         "buffer_size": 100000,
         "learning_starts": 20000,
-        "batch_size": 32,
-        "tau": 0.005,
+        "batch_size": 64,
+        "tau": 1.0,
         "gamma": 0.99,
-        "train_freq": 1,
+        "train_freq": 4,
         "gradient_steps": 1,
-        "target_entropy_scale": 0.6,
-        "alpha_lr": 0.0001,
+        "target_update_interval": 8000,
+        "target_entropy_scale": 0.89,
+        "alpha_lr": 0.0003,
+        "optimizer_eps": 0.0001,
         "max_grad_norm": 0.5,
-        "exploration_initial_eps": 0.2,
-        "exploration_final_eps": 0.03,
-        "exploration_fraction": 0.5,
+        "exploration_initial_eps": 0.0,
+        "exploration_final_eps": 0.0,
+        "exploration_fraction": 0.0,
         "log_interval": 50000,
         "diagnostic_interval": 50000,
-        "q_backup_mode": "mean",
-        "q_clip_value": 10.0,
-        "entropy_penalty_coef": 0.01
+        "q_backup_mode": "min",
+        "q_clip_value": null,
+        "entropy_penalty_coef": 0.0
       }
     }
   }

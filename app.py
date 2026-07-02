@@ -83,6 +83,7 @@ def record_playback_video(
     video_dir: str,
     env_overrides: dict[str, Any] | None = None,
     max_steps: int = 5000,
+    deterministic: bool = True,
 ) -> dict[str, Any] | None:
     """record one deterministic episode as mp4. best-effort, logs warning on failure."""
     try:
@@ -130,8 +131,12 @@ def record_playback_video(
         done = False
         steps = 0
         action_counts: Counter[int] = Counter()
+        try:
+            action_meanings = list(env.unwrapped.get_action_meanings())
+        except Exception:
+            action_meanings = []
         while not done and steps < max_steps:
-            action, _ = model.predict(obs, deterministic=True)
+            action, _ = model.predict(obs, deterministic=deterministic)
             action_int = int(action.item()) if hasattr(action, "item") else int(action)
             action_counts[action_int] += 1
             obs, _, terminated, truncated, _ = env.step(action)
@@ -150,6 +155,9 @@ def record_playback_video(
             "video_dir": str(out),
             "steps": steps,
             "action_counts": dict(sorted(action_counts.items())),
+            "action_meanings": action_meanings,
+            "deterministic": deterministic,
+            "truncated_by_step_limit": steps >= max_steps and not done,
         }
     except Exception as exc:
         logger.warning("playback failed for %s/%s seed=%d: %s", algo, env_id, seed, exc)
@@ -387,11 +395,16 @@ def main(argv: list[str] | None = None) -> int:
                         seed,
                         str(vid_dir),
                         env_overrides=playback_env_overrides,
+                        max_steps=int(algo_cfg.get("playback_max_steps", 5000)),
+                        deterministic=bool(algo_cfg.get("playback_deterministic", True)),
                     )
                     if playback:
                         run_result["PlaybackDir"] = playback["video_dir"]
                         run_result["PlaybackSteps"] = playback["steps"]
                         run_result["PlaybackActionCounts"] = json.dumps(playback["action_counts"], sort_keys=True)
+                        run_result["PlaybackActionMeanings"] = json.dumps(playback["action_meanings"])
+                        run_result["PlaybackDeterministic"] = playback["deterministic"]
+                        run_result["PlaybackTruncatedByStepLimit"] = playback["truncated_by_step_limit"]
             except Exception as exc:
                 logger.exception("run %s failed", run_label)
                 run_result = {

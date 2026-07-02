@@ -5,15 +5,23 @@ build-backend = "hatchling.build"
 [project]
 name = "atari-rl-benchmarking"
 version = "0.1.0"
-description = "reproducible benchmarking of rl agents on atari 2600 games using stable-baselines3 and custom implementations"
+description = "reproducible Atari 2600 reinforcement-learning benchmarks with DQN, PPO, and custom DiscreteSAC agents"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = ["atari", "reinforcement-learning", "benchmarking", "stable-baselines3", "gymnasium"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 authors = [
-    {name = "elsayed elmandoh", email = "elsayed@example.com"},
-    {name = "mohamed kamal", email = "kamal@example.com"},
-    {name = "mohamed zidan", email = "zidan@example.com"},
-    {name = "mostafa mohie", email = "mostafa@example.com"},
+    {name = "Elsayed Elmandoh", email = "elsayed@example.com"},
+    {name = "Mohamed Hasan", email = "hasan@example.com"},
+    {name = "Mohamed Zidan", email = "zidan@example.com"},
+    {name = "Mostafa Elofy", email = "mostafa@example.com"},
 ]
 requires-python = ">=3.12"
 dependencies = [
@@ -42,13 +50,24 @@ rl = [
     "scipy>=1.15.0",
     "pillow>=11.0.0",
     "moviepy>=2.1.0",
+    "tensorboard>=2.16.0",
 ]
+report = [
+    "pandas>=2.2.0",
+    "matplotlib>=3.10.0",
+    "scipy>=1.15.0",
+]
+
+[project.scripts]
+atari-benchmark = "app:main"
+atari-record-playback = "src.inference.record_playback:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/"]
 
 [project.urls]
 repository = "https://github.com/elsayedelmandoh/atari-rl-benchmarking"
+report = "https://github.com/elsayedelmandoh/atari-rl-benchmarking/blob/main/docs/deliverables/02-report.md"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
