@@ -1,9 +1,7 @@
-"""Generate final benchmark figures from the report evidence profiles.
+"""Generate final benchmark figures from the final benchmark profile.
 
 Inputs:
-  - evals/checkpoints/1m_5seeds/*_results_*.csv for DQN
-  - evals/checkpoints/1m_1seed_ppo_diagnostic/*_results_*.csv for PPO
-  - evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/*_results_*.csv for DiscreteSAC
+  - evals/checkpoints/1m_5seeds/*_results_*.csv for DQN, PPO, and DiscreteSAC
 
 Outputs:
   - evals/figures/mean_reward.png
@@ -32,11 +30,7 @@ GAMES = ["Pong", "Breakout", "Space Invaders"]
 ALGOS = ["DQN", "PPO", "DiscreteSAC"]
 ALGO_COLORS = {"DQN": "#4c72b0", "PPO": "#dd8452", "DiscreteSAC": "#55a868"}
 
-FINAL_SOURCES = {
-    "DQN": "1m_5seeds",
-    "PPO": "1m_1seed_ppo_diagnostic",
-    "DiscreteSAC": "1m_1seed_StaDiscSac_diagnostic",
-}
+FINAL_PROFILE = "1m_5seeds"
 
 
 def latest_results_csv(profile: str) -> Path:
@@ -48,29 +42,21 @@ def latest_results_csv(profile: str) -> Path:
 
 def load_final_table() -> pd.DataFrame:
     rows: list[dict] = []
-    for algo, profile in FINAL_SOURCES.items():
-        df = pd.read_csv(latest_results_csv(profile))
-        df = df[df["Algorithm"] == algo].copy()
+    all_results = pd.read_csv(latest_results_csv(FINAL_PROFILE))
+    for algo in ALGOS:
+        df = all_results[all_results["Algorithm"] == algo].copy()
         if df.empty:
-            raise ValueError(f"profile {profile} does not contain rows for {algo}")
+            raise ValueError(f"profile {FINAL_PROFILE} does not contain rows for {algo}")
 
         for game in GAMES:
             game_rows = df[df["Environment"] == game]
             if game_rows.empty:
-                raise ValueError(f"profile {profile} does not contain {algo}/{game}")
+                raise ValueError(f"profile {FINAL_PROFILE} does not contain {algo}/{game}")
 
             means = game_rows["Final_Reward_Mean"].astype(float)
             maxes = game_rows["Final_Reward_Max"].astype(float)
             train_secs = game_rows["Training_Seconds"].astype(float)
-
-            # DQN has five seeds in the final evidence profile, so this is a seed-level std.
-            # PPO and DiscreteSAC diagnostic profiles have one seed, so we keep their eval-episode std.
-            if len(game_rows) > 1:
-                spread = float(means.std(ddof=0))
-                spread_label = "seed_std"
-            else:
-                spread = float(game_rows["Final_Reward_Std"].astype(float).iloc[0])
-                spread_label = "eval_episode_std"
+            spread = float(means.std(ddof=1)) if len(game_rows) > 1 else 0.0
 
             train_sec = float(train_secs.mean())
             mean_reward = float(means.mean())
@@ -78,11 +64,11 @@ def load_final_table() -> pd.DataFrame:
                 {
                     "Algorithm": algo,
                     "Game": game,
-                    "Profile": profile,
+                    "Profile": FINAL_PROFILE,
                     "Runs": int(len(game_rows)),
                     "Mean": mean_reward,
                     "Spread": spread,
-                    "SpreadType": spread_label,
+                    "SpreadType": "seed_std",
                     "Max": float(maxes.max()),
                     "TrainMin": train_sec / 60.0,
                     "RewardPerHour": (mean_reward / train_sec * 3600.0) if train_sec > 0 else 0.0,
@@ -110,7 +96,7 @@ def grouped_bar_chart(table: pd.DataFrame, metric: str, title: str, ylabel: str,
             x + offset,
             vals,
             width,
-            label=f"{algo} ({FINAL_SOURCES[algo]})",
+            label=algo,
             color=ALGO_COLORS[algo],
             yerr=errs if error_bars else None,
             capsize=3 if error_bars else 0,
@@ -122,7 +108,7 @@ def grouped_bar_chart(table: pd.DataFrame, metric: str, title: str, ylabel: str,
     ax.set_xticks(x)
     ax.set_xticklabels(GAMES)
     ax.axhline(y=0, color="gray", lw=0.6)
-    ax.legend(fontsize=8)
+    ax.legend(title=FINAL_PROFILE, fontsize=8)
     ax.grid(axis="y", alpha=0.2)
 
     fig.tight_layout()

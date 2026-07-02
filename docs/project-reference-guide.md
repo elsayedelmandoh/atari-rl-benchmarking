@@ -63,13 +63,13 @@ Settings are computed as absolute `Path` objects. Importing `settings` also crea
 
 - Stores named profiles under `profiles`.
 - `300k_3seeds` currently means 300,000 timesteps, seed `[0]`, 50 evaluation episodes, checkpoints every 100,000 steps.
-- `1m_1seed_ppo_diagnostic` is the PPO-only diagnostic profile: 1,000,000 timesteps, seed `[0]`, 100 evaluation episodes, checkpoints every 100,000 steps. Run it with `--algo ppo`.
-- `1m_1seed_StaDiscSac_diagnostic` is the Stable DiscreteSAC diagnostic profile: 1,000,000 timesteps, seed `[0]`, 100 evaluation episodes, checkpoints every 100,000 steps. Run it with `--algo discretesac`.
-- `1m_5seeds` is the original proposal-scale profile name, currently configured for 1,000,000 timesteps and seeds `[0, 1, 2]`.
+- `1m_1seed_ppo_diagnostic` is a PPO diagnostic profile name retained for compatibility. It is currently configured for 1,000,000 timesteps and seeds `[0, 1, 2, 3, 4]`; run it with `--algo ppo` only when you explicitly want that diagnostic output folder.
+- `1m_1seed_StaDiscSac_diagnostic` is a Stable DiscreteSAC diagnostic profile name retained for compatibility. It is currently configured for 1,000,000 timesteps and seeds `[0, 1, 2, 3, 4]`; run it with `--algo discretesac` only when you explicitly want that diagnostic output folder.
+- `1m_5seeds` is the final fair-comparison profile for DQN, PPO, and DiscreteSAC. It is configured for 1,000,000 timesteps and seeds `[0, 1, 2, 3, 4]`.
 - To change run size, edit the profile or pass CLI overrides:
   - `python app.py 300k_3seeds --timesteps 100000 --seeds 0`
-  - `python app.py 1m_1seed_ppo_diagnostic --algo ppo`
-  - `python app.py 1m_1seed_StaDiscSac_diagnostic --algo discretesac`
+  - `python app.py 1m_5seeds --algo ppo`
+  - `python app.py 1m_5seeds --algo discretesac`
 
 `configs/algorithms.json`
 
@@ -129,10 +129,10 @@ For `300k_3seeds`, checkpoints and final model files go under `evals/checkpoints
 Regenerate playback from saved checkpoints without retraining:
 
 ```powershell
-python -m src.inference.record_playback 1m_1seed_StaDiscSac_diagnostic pong
-python -m src.inference.record_playback 1m_1seed_StaDiscSac_diagnostic breakout
-python -m src.inference.record_playback 1m_1seed_StaDiscSac_diagnostic "space invaders"
-python -m src.inference.record_playback 1m_1seed_StaDiscSac_diagnostic all
+python -m src.inference.record_playback 1m_5seeds pong
+python -m src.inference.record_playback 1m_5seeds breakout
+python -m src.inference.record_playback 1m_5seeds "space invaders"
+python -m src.inference.record_playback 1m_5seeds all
 ```
 
 The helper defaults to DiscreteSAC, seed `0`, and writes videos under `artifacts/evaluation/playback/<profile>_regenerated/`.
@@ -141,8 +141,8 @@ The helper defaults to DiscreteSAC, seed `0`, and writes videos under `artifacts
 
 - `python app.py`: runs the default benchmark profile, now `300k_3seeds`.
 - `python app.py 300k_3seeds`: explicit 300k, 3-seed validation run.
-- `python app.py 1m_1seed_ppo_diagnostic --algo ppo`: PPO-only 1M diagnostic run after the current 300k comparison finishes.
-- `python app.py 1m_1seed_StaDiscSac_diagnostic --algo discretesac`: Stable DiscreteSAC-only 1M diagnostic run.
+- `python app.py 1m_5seeds --algo ppo`: PPO-only final-profile run.
+- `python app.py 1m_5seeds --algo discretesac`: DiscreteSAC-only final-profile run.
 - `python app.py 300k_3seeds --algo dqn --env pong`: focused run for one algorithm/game.
 - `python scripts/validate_envs.py`: check Atari environment resolution.
 - `python scripts/validate_inputs.py`: check image size, dtype, range, layout, contiguity, and one model prediction for every algorithm/game pair.

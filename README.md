@@ -60,19 +60,19 @@ docs/deliverables/02-report.pdf
 
 ## Final Results Snapshot
 
-The final report highlights one evidence profile per algorithm:
+The final report uses the same evidence profile for every algorithm:
 
-- DQN: `1m_5seeds`
-- PPO: `1m_1seed_ppo_diagnostic`
-- DiscreteSAC: `1m_1seed_StaDiscSac_diagnostic`
+- Profile: `1m_5seeds`
+- Seeds: `0`, `1`, `2`, `3`, `4`
+- Games: Pong, Breakout, Space Invaders
 
 | Algorithm | Pong mean | Breakout mean | Space Invaders mean |
 |---|---:|---:|---:|
 | DQN | -8.14 | 14.66 | 324.66 |
-| PPO | -14.60 | 6.93 | 25.03 |
-| DiscreteSAC | 18.77 | 37.42 | 29.44 |
+| PPO | -12.81 | 8.97 | 26.20 |
+| DiscreteSAC | 8.41 | 32.47 | 29.53 |
 
-DQN values are means across the five-seed profile. PPO and DiscreteSAC values are final diagnostic-profile means. See `docs/deliverables/02-report.md` for interpretation, caveats, diagnostics, and playback findings.
+All values are means across the five final seeds. See `docs/deliverables/02-report.md` for interpretation, caveats, diagnostics, and playback findings.
 
 ### Playback Videos
 
@@ -140,29 +140,29 @@ Run DQN final evidence profile only:
 python app.py 1m_5seeds --algo dqn
 ```
 
-Run PPO diagnostic only:
+Run PPO final evidence profile only:
 
 ```bash
-python app.py 1m_1seed_ppo_diagnostic --algo ppo
+python app.py 1m_5seeds --algo ppo
 ```
 
-Run DiscreteSAC diagnostic only:
+Run DiscreteSAC final evidence profile only:
 
 ```bash
-python app.py 1m_1seed_StaDiscSac_diagnostic --algo discretesac
+python app.py 1m_5seeds --algo discretesac
 ```
 
 Run one algorithm on one game:
 
 ```bash
-python app.py 1m_1seed_StaDiscSac_diagnostic --algo discretesac --env pong
+python app.py 1m_5seeds --algo discretesac --env pong
 ```
 
 Regenerate playback from existing checkpoints:
 
 ```bash
-python -m src.inference.record_playback 1m_1seed_StaDiscSac_diagnostic pong
-python -m src.inference.record_playback 1m_1seed_StaDiscSac_diagnostic all
+python -m src.inference.record_playback 1m_5seeds pong
+python -m src.inference.record_playback 1m_5seeds all
 ```
 
 Regenerate final figures used by the report:
