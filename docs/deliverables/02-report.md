@@ -30,15 +30,15 @@ The algorithms are DQN, PPO, and DiscreteSAC. DQN and PPO are implemented using 
 
 The goal is not only to produce final reward numbers, but to build an end-to-end benchmark system that can be inspected and reproduced. The repository includes configuration files, source code, checkpoints, CSV result files, manifests, diagnostics, TensorBoard logs, input samples, and MP4 playback videos. This follows the project guidance in `docs/project-definition/making-a-rewarding-rl-project.md`: use existing tools where appropriate, define the RL problem rigorously, conduct comprehensive experiments, and discuss failures honestly.
 
-The final evidence emphasized in this report is stored in three profile-scoped locations:
+The final evidence emphasized in this report is stored in one profile-scoped benchmark location. The completed final comparison now uses the same profile, games, and seeds for all three algorithms.
 
 | Algorithm | Final playback folder | Final checkpoint/results folder |
 |---|---|---|
 | DQN | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
-| PPO | `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/` | `evals/checkpoints/1m_1seed_ppo_diagnostic/` |
-| DiscreteSAC | `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/` | `evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/` |
+| PPO | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
+| DiscreteSAC | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
 
-Older and shorter profiles are still discussed because they explain how the benchmark evolved, but the final comparison highlights the folders above.
+Older and shorter profiles are still discussed because they explain how the benchmark evolved, but the final comparison highlights the `1m_5seeds` folders above.
 
 ## 2 - Problem Formulation
 
@@ -133,7 +133,7 @@ The benchmark is profile-based. A profile controls timesteps, seeds, evaluation 
 | `100k_1seed` | Early pilot across all algorithms and games |
 | `200k_1seed` | Tuned pilot after initial stability issues |
 | `300k_1seed_ppo_sac_improved` | Quick PPO and DiscreteSAC comparison, DQN excluded |
-| `1m_5seeds` | Main DQN benchmark and multi-seed comparison folder |
+| `1m_5seeds` | Final multi-seed benchmark folder for DQN, PPO, and DiscreteSAC |
 | `1m_1seed_ppo_diagnostic` | PPO-only diagnostic run |
 | `1m_1seed_StaDiscSac_diagnostic` | Stable DiscreteSAC diagnostic run |
 
@@ -177,8 +177,8 @@ The PPO diagnostic profile added:
 
 The final PPO evidence is:
 
-- playback: `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/`;
-- checkpoints/results: `evals/checkpoints/1m_1seed_ppo_diagnostic/`.
+- playback: `artifacts/evaluation/playback/1m_5seeds/`;
+- checkpoints/results: `evals/checkpoints/1m_5seeds/`.
 
 #### DiscreteSAC
 
@@ -191,8 +191,8 @@ The DiscreteSAC implementation evolved significantly during the project. Earlier
 
 The final DiscreteSAC evidence is:
 
-- playback: `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/`;
-- checkpoints/results: `evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/`.
+- playback: `artifacts/evaluation/playback/1m_5seeds/`;
+- checkpoints/results: `evals/checkpoints/1m_5seeds/`.
 
 ### Problems Found And Solutions Implemented
 
@@ -215,15 +215,17 @@ The project improved through several debugging cycles. The main problems and fix
 
 ## 4 - Results
 
-This section reports all major benchmark evidence, but highlights the final result folders requested for each algorithm.
+This section reports all major benchmark evidence, with the final quantitative comparison taken from the completed `1m_5seeds` profile for every algorithm.
 
 ### Final Evidence Folders
 
 | Algorithm | Final profile | Playback evidence | Checkpoint/result evidence |
 |---|---|---|---|
 | DQN | `1m_5seeds` | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
-| PPO | `1m_1seed_ppo_diagnostic` | `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/` | `evals/checkpoints/1m_1seed_ppo_diagnostic/` |
-| DiscreteSAC | `1m_1seed_StaDiscSac_diagnostic` | `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/` | `evals/checkpoints/1m_1seed_StaDiscSac_diagnostic/` |
+| PPO | `1m_5seeds` | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
+| DiscreteSAC | `1m_5seeds` | `artifacts/evaluation/playback/1m_5seeds/` | `evals/checkpoints/1m_5seeds/` |
+
+The final benchmark contains 45 completed runs: three algorithms, three games, and five seeds per condition (`0`, `1`, `2`, `3`, and `4`). The repository also contains one final model and one playback MP4 for each run.
 
 ### Evaluation Figures
 
@@ -251,35 +253,35 @@ DQN is the most stable final baseline. The `1m_5seeds` profile contains five see
 
 | Game | Seeds | Mean of seed means | Seed std | Best episode max |
 |---|---:|---:|---:|---:|
-| Pong | 5 | -8.14 | 9.27 | 19 |
-| Breakout | 5 | 14.66 | 3.29 | 43 |
-| Space Invaders | 5 | 324.66 | 23.64 | 895 |
+| Pong | 5 | -8.14 | 10.37 | 19 |
+| Breakout | 5 | 14.66 | 3.68 | 43 |
+| Space Invaders | 5 | 324.66 | 26.43 | 895 |
 
-Interpretation: DQN learned the strongest overall policies among the completed stable baselines. It was especially strong on Space Invaders and produced the best completed multi-seed Pong performance. The Pong seed standard deviation is high, which means DQN is sensitive to random seed at the 1M-step budget, but it still shows meaningful learning in some seeds.
+Interpretation: DQN remained the strongest Space Invaders baseline by a large margin and produced stable Breakout performance. Pong was seed-sensitive at the 1M-step budget: some seeds learned meaningful play while others stayed weak.
 
-### PPO Final Diagnostic Results: `1m_1seed_ppo_diagnostic`
+### PPO Final Results: `1m_5seeds`
 
-The PPO final evidence comes from the dedicated 1M diagnostic profile. This profile was created because earlier 300k playback looked collapsed and because reference Atari PPO setups often require much larger budgets than 300k.
+The final PPO evidence now comes from the same `1m_5seeds` profile as DQN and DiscreteSAC. The earlier dedicated diagnostic profile remains useful for explaining the debugging process, but the final reported PPO numbers below are the completed five-seed benchmark values.
 
-| Game | Seed | Mean | Std | Max | Playback steps | Playback action counts |
-|---|---:|---:|---:|---:|---:|---|
-| Pong | 0 | -14.60 | 7.20 | -3 | 2,362 | `{"2": 1259, "3": 1082, "5": 21}` |
-| Breakout | 0 | 6.93 | 2.39 | 9 | 5,000 | `{"0": 4861, "1": 68, "2": 35, "3": 36}` |
-| Space Invaders | 0 | 25.03 | 4.55 | 31 | 843 | `{"4": 345, "5": 498}` |
+| Game | Seeds | Mean of seed means | Seed std | Best episode max |
+|---|---:|---:|---:|---:|
+| Pong | 5 | -12.81 | 4.55 | -1 |
+| Breakout | 5 | 8.97 | 2.34 | 15 |
+| Space Invaders | 5 | 26.20 | 4.57 | 47 |
 
-Interpretation: PPO improved over the short 300k diagnostic in Pong but remained weak overall at this configuration. Breakout learned some paddle behavior but did not match the main DQN benchmark. Space Invaders remained particularly weak in this PPO diagnostic. The diagnostic result suggests undertraining and/or hyperparameter mismatch rather than a broken pipeline, because PPO action diagnostics and playback show nontrivial but low-quality behavior.
+Interpretation: PPO is the fastest final algorithm by wall-clock time, but its 1M-step performance remained weak. It underperformed DQN on all three games and underperformed DiscreteSAC on Pong and Breakout. This is consistent with the earlier diagnostic observation that PPO can require larger Atari budgets or closer reference hyperparameters before it becomes competitive.
 
-### DiscreteSAC Final Diagnostic Results: `1m_1seed_StaDiscSac_diagnostic`
+### DiscreteSAC Final Results: `1m_5seeds`
 
-The final DiscreteSAC evidence comes from the Stable DiscreteSAC diagnostic profile after the playback and training-recipe fixes discussed above.
+The final DiscreteSAC evidence now comes from the completed five-seed `1m_5seeds` profile after the playback and training-recipe fixes discussed above.
 
-| Game | Seed | Mean | Std | Max | Playback steps | Playback action counts |
-|---|---:|---:|---:|---:|---:|---|
-| Pong | 42 | 18.77 | 2.51 | 21 | 1,650 | `{"0": 310, "1": 270, "2": 196, "3": 314, "4": 229, "5": 331}` |
-| Breakout | 42 | 37.42 | 12.02 | 85 | 1,021 | `{"0": 281, "1": 280, "2": 219, "3": 241}` |
-| Space Invaders | 42 | 29.44 | 5.56 | 49 | 1,217 | `{"0": 221, "1": 234, "2": 143, "3": 222, "4": 180, "5": 217}` |
+| Game | Seeds | Mean of seed means | Seed std | Best episode max |
+|---|---:|---:|---:|---:|
+| Pong | 5 | 8.41 | 16.75 | 21 |
+| Breakout | 5 | 32.47 | 3.66 | 77 |
+| Space Invaders | 5 | 29.53 | 0.42 | 49 |
 
-Interpretation: the final DiscreteSAC diagnostic is much better than the earlier collapsed playback behavior. Pong and Breakout improved substantially in this one-seed diagnostic, and action counts show that playback is no longer stuck on one deterministic action. Space Invaders still remains weak: it samples across actions but does not yet show strong aiming or dodging. This matches the qualitative observation that Space Invaders requires longer-horizon credit assignment and may need more timesteps or a closer SD-SAC implementation.
+Interpretation: DiscreteSAC is the strongest final algorithm on Pong and Breakout by mean reward, but its Pong result has very high seed variance because one seed collapsed while several seeds performed well. It remained weak on Space Invaders, where DQN was clearly stronger. This supports the project conclusion that the custom Stable DiscreteSAC-style recipe improved the algorithm, but Space Invaders still needs better long-horizon credit assignment and/or a closer SD-SAC implementation.
 
 ### Broader Benchmark Context
 
@@ -308,9 +310,9 @@ This is why the final benchmark keeps both CSV metrics and MP4 playback videos.
 
 ## 5 - Conclusion
 
-This project produced a complete Atari RL benchmarking pipeline and a set of interpretable results across DQN, PPO, and DiscreteSAC. The project includes the core elements expected from a rigorous RL benchmark: defined observation/action/reward spaces, shared preprocessing, controlled configurations, checkpointing, result CSVs, manifests, diagnostics, logs, and playback videos.
+This project produced a complete Atari RL benchmarking pipeline and a set of interpretable results across DQN, PPO, and DiscreteSAC. The final benchmark is now fair across the three algorithms because all final results use the same `1m_5seeds` profile, the same three games, and the same five seeds. The project includes the core elements expected from a rigorous RL benchmark: defined observation/action/reward spaces, shared preprocessing, controlled configurations, checkpointing, result CSVs, manifests, diagnostics, logs, and playback videos.
 
-The strongest final baseline is DQN. In the `1m_5seeds` profile, DQN achieved the best overall completed multi-seed performance, especially on Space Invaders and Pong. PPO was faster wall-clock and useful as a standard policy-gradient baseline, but the final PPO diagnostic remained weaker than expected at 1M steps. DiscreteSAC required the most debugging because it is custom and less standardized for Atari. After the fixes, the final DiscreteSAC diagnostic improved strongly on Pong and Breakout, but Space Invaders still needs more work.
+DQN is the clearest final baseline on Space Invaders and remains the most dependable reference implementation. PPO was fastest wall-clock but weaker in reward at this 1M-step budget. DiscreteSAC required the most debugging because it is custom and less standardized for Atari; after the fixes, it became the strongest mean performer on Pong and Breakout, but it was slow and still weak on Space Invaders.
 
 The main technical problems solved during the project were:
 
@@ -328,11 +330,11 @@ The main lesson is that reward tables alone are not enough. A policy can score n
 
 Recommended future work:
 
-1. Run a multi-seed version of the final improved DiscreteSAC diagnostic.
-2. Increase PPO and DiscreteSAC budgets beyond 1M timesteps if time permits.
-3. Add confidence intervals and formal seed-level statistical tests.
-4. Add closer SD-SAC features such as n-step returns and stored entropy penalties.
-5. Parse TensorBoard logs into learning curves for the final report figures.
+1. Increase PPO and DiscreteSAC budgets beyond 1M timesteps if time permits.
+2. Add confidence intervals and formal seed-level statistical tests.
+3. Add closer SD-SAC features such as n-step returns and stored entropy penalties.
+4. Parse TensorBoard logs into learning curves for the final report figures.
+5. Review the failed or weak playback seeds qualitatively, especially DiscreteSAC Pong seed 0 and all Space Invaders policies.
 
 References used for method direction:
 
