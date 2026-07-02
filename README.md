@@ -1,7 +1,7 @@
 # Benchmarking DQN, PPO, and DiscreteSAC on Atari 2600 Games
 
 [![github](https://img.shields.io/badge/GitHub-repo-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/elsayedelmandoh/atari-rl-benchmarking)
-[![linkedin](https://img.shields.io/badge/elsayed-linkedin-0077b5?style=for-the-badge&logo=linkedin&logocolor=white)](https://linktr.ee/elsayedelmandoh)
+[![linkedin](https://img.shields.io/badge/elsayed-linkedin-0077b5?style=for-the-badge&logo=linkedin&logocolor=white)](https://www.linkedin.com/in/elsayed-elmandoh-b5849a1b8/)
 [![linkedin](https://img.shields.io/badge/kamal-linkedin-0077b5?style=for-the-badge&logo=linkedin&logocolor=white)](https://www.linkedin.com/in/mohamed-kamal-has/)
 [![linkedin](https://img.shields.io/badge/zidan-linkedin-0077b5?style=for-the-badge&logo=linkedin&logocolor=white)](https://www.linkedin.com/in/mohamed-zidan-adc/)
 [![linkedin](https://img.shields.io/badge/mostafa-linkedin-0077b5?style=for-the-badge&logo=linkedin&logocolor=white)](https://www.linkedin.com/in/mostafa-mohie/)
@@ -43,7 +43,7 @@ The benchmark uses pixel observations, shared Atari preprocessing, runtime input
 The main deliverable report is available at:
 
 ```text
-docs/deliverables/02-report.md
+docs/deliverables/02-report.pdf
 ```
 
 ## Key Features
@@ -73,6 +73,18 @@ The final report highlights one evidence profile per algorithm:
 | DiscreteSAC | 18.77 | 37.42 | 29.44 |
 
 DQN values are means across the five-seed profile. PPO and DiscreteSAC values are final diagnostic-profile means. See `docs/deliverables/02-report.md` for interpretation, caveats, diagnostics, and playback findings.
+
+### Playback Videos
+
+Playback MP4s for each final profile are stored under `artifacts/evaluation/playback/`:
+
+| Algorithm | Playback folder |
+|---|---|
+| DQN | `artifacts/evaluation/playback/1m_5seeds/` |
+| PPO | `artifacts/evaluation/playback/1m_1seed_ppo_diagnostic/` |
+| DiscreteSAC | `artifacts/evaluation/playback/1m_1seed_StaDiscSac_diagnostic/` |
+
+Each folder contains game/algo-named subfolders with recorded episodes. See the [report](docs/deliverables/02-report.md#4---results) for qualitative playback findings, action-count diagnostics, and per-game behavior analysis.
 
 ## Setup
 

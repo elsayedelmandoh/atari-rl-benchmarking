@@ -1,37 +1,36 @@
-# stack overview and tooling choices
+# stack overview
 
-# expertise
-ml, dl, nlp, genai, agentic ai
+## languages
+- python 3.12
 
-## core stack
-- language: python 3.12
-- environment: conda
-- entrypoint: app.py
-- reusable code: src/
-- tests: tests/
-- notebooks: notebooks/
-- docs: docs/
-- data layout: data/raw, data/processed, data/samples, data/models, data/predictions, data/vectorizers
-- project manager: gemini 3.5 thinking
-- ide: vscode (wsl2)
-- architect: claude 4.6 opus
-- implementation: glm5, kimi k2.5, qwen 3.6 pro
-- code review: claude 4.6 opus
-- deployment: hugging face, docker
+## rl / ml
+- **gymnasium** (atari environment wrapper, ale interface)
+- **stable-baselines3** (dqn, ppo implementations and cnn policy)
+- **pytorch** (neural network backend, tensor ops, gradient computation)
 
-## common libraries
-- numpy
-- pandas
-- matplotlib
-- seaborn
-- scikit-learn
-- pytorch
-- scipy
-- nltk
-- transformers
+## data / config
+- **json** (configs: algorithms, environments, preprocessing, profiles)
+- **csv** (results, diagnostics, playback metadata)
+- **numpy** (array operations, statistics)
 
-## project rules
-- keep dependencies minimal until a feature needs them
-- add a library only when it supports a concrete use case
-- keep notebooks for exploration and move stable logic into src/
-- keep tests deterministic and repeatable
+## logging / visualization
+- **tensorboard** (training curves, loss plots)
+- **matplotlib** + **seaborn** (report figures: mean/max reward, reward/hour, training time)
+- **opencv** / **ffmpeg** (mp4 playback recording)
+
+## packaging
+- **pyproject.toml** (project metadata, dependencies)
+- **uv** (dependency management, lockfile)
+- **pytest** (unit tests)
+- **ruff** (linting and formatting)
+
+## why each choice
+
+| Component | Choice | Reason |
+|---|---|---|
+| RL framework | Stable Baselines3 | Mature, well-tested DQN/PPO; project requirement to use existing tools |
+| Atari interface | Gymnasium ALE | Standard Atari benchmark wrapper; maintained fork |
+| Neural network | PyTorch | Required by SB3; discrete SAC custom implementation |
+| Config | JSON | Simple, version-controllable, no extra deps |
+| Diagnostic tracking | CSV | Universal, diffable, can be loaded into any analysis tool |
+| Figures | Matplotlib/Seaborn | Standard Python plotting; publication-quality output |
