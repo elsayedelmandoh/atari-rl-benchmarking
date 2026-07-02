@@ -114,7 +114,18 @@ def record_playback_video(
         elif algo.lower() == "ppo":
             from stable_baselines3 import PPO
 
-            model = PPO.load(str(path), device=device)
+            # The policy weights are all playback needs. Some older PPO checkpoints
+            # serialize training schedules that can fail to unpickle across Python/SB3
+            # versions, so replace those training-only objects during inference load.
+            model = PPO.load(
+                str(path),
+                device=device,
+                custom_objects={
+                    "learning_rate": 0.0,
+                    "lr_schedule": lambda _: 0.0,
+                    "clip_range": lambda _: 0.0,
+                },
+            )
         else:
             return None
 
