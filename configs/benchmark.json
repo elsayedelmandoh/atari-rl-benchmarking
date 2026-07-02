@@ -52,14 +52,14 @@
     "1m_1seed_ppo_diagnostic": {
       "description": "PPO-test.",
       "timesteps": 1000000,
-      "seeds": [0],
+      "seeds": [0, 1, 2, 3, 4],
       "evaluation_episodes": 100,
       "checkpoint_freq": 100000
     },
     "1m_1seed_StaDiscSac_diagnostic": {
       "description": "Stable DiscreteSAC test.",
       "timesteps": 1000000,
-      "seeds": [42],
+      "seeds": [0, 1, 2, 3, 4],
       "evaluation_episodes": 100,
       "checkpoint_freq": 100000
     },
@@ -73,7 +73,7 @@
     "1m_5seeds": {
       "description": "Original proposal-scale benchmark.",
       "timesteps": 1000000,
-      "seeds": [0, 1, 2],
+      "seeds": [0, 1, 2, 3, 4],
       "evaluation_episodes": 100,
       "checkpoint_freq": 100000
     }
